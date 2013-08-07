@@ -5,6 +5,13 @@ SEAC4RS-IDL contains IDL scripts for creating, processing, and analysing aircraf
 
 Instructions for set up:
 1. You will need to include a line in your idl_startup.pro that defines the !SEAC4RS system variable. 
+This is done using the following syntax:
+SEAC4RS = '/home/username/yourpath/SEAC4RS'
+DefSysV, '!SEAC4RS',Exists=Exists
+if (not Exists ) then DefSysV,'!SEAC4RS',SEAC4RS
+
+You may also want to add this path to the default IDL search path using
+Pref_Set, 'IDL_PATH', Expand_Path('+!SEAC4RS/IDL/', /All_Dirs ) + SEP + '<IDL_DEFAULT>', /Commit
 
 2. Also you need to update IDL/gamap2/gamap_util/ctm_read_planeflight.pro as below:
 
@@ -36,9 +43,9 @@ You can add a line for IDL_PATH in your idl_startup.pro
    field_data/ -- field measurement
      DC8/ 
        merge_60s/             -- one-minute merged aircraft data 
-       merge_10m_0.3125x0.25/ -- merged aircraft data averaged to GEOS-Chem resolution
+       merge_10m_0.25x0.3125/ -- merged aircraft data averaged to GEOS-Chem resolution
      ER2/ 
        merge_60s/             -- one-minute merged aircraft data 
-       merge_10m_0.3125x0.25/ -- merged aircraft data averaged to GEOS-Chem resolution
+       merge_10m_0.25x0.3125/ -- merged aircraft data averaged to GEOS-Chem resolution
        
 These data are not included here as they are not currently publicly released.
