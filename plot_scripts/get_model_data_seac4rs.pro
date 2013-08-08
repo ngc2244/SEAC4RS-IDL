@@ -95,7 +95,7 @@
 ; this software. If this software shall be used commercially or
 ; sold as part of a larger package, please contact the author.
 ; Bugs and comments should be directed to cdh@io.as.harvard.edu
-; with subject "IDL routine get_field_data_arctas"
+; with subject "IDL routine get_field_data_seac4rs"
 ;-----------------------------------------------------------------------
 
 
@@ -325,7 +325,7 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
   ; is passed as a scalar (for shorthand)
   ;--------------------------------------------------------------
 
-  ; Number of platforms (e.g. WP3D) and flight dates
+  ; Number of platforms (e.g. DC8) and flight dates
   ; Note that both Platforms and FlightDates can be '*'
   N_Platforms = n_elements( Platform )
   N_Dates     = n_elements( FlightDates )
@@ -437,9 +437,9 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
 ;  If Keyword_Set( NoCities ) then begin
 ;
 ;    ; We need to get latitude, longitude and altitude
-;    lat = get_model_data_arctas( 'lat', Platform, Flightdates )
-;    lon = get_model_data_arctas( 'lon', Platform, Flightdates )
-;    alt = get_model_data_arctas( 'alt', Platform, Flightdates )
+;    lat = get_model_data_seac4rs( 'lat', Platform, Flightdates )
+;    lon = get_model_data_seac4rs( 'lon', Platform, Flightdates )
+;    alt = get_model_data_seac4rs( 'alt', Platform, Flightdates )
 ;
 ;    ; In the following tests, we want to eliminate the grid boxes
 ;    ; containing these cities. We are using the 2x2.5 simulation

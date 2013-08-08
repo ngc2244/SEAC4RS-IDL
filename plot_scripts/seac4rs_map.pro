@@ -46,7 +46,7 @@
 ; this software. If this software shall be used commercially or
 ; sold as part of a larger package, please contact the author.
 ; Bugs and comments should be directed to cdh@io.as.harvard.edu
-; with subject "IDL routine arctas_map"
+; with subject "IDL routine seac4rs_map"
 ;-----------------------------------------------------------------------
 
 
@@ -65,7 +65,7 @@ pro seac4rs_map, lon, lat, data, latmin=latmin, mindata=mindata, $
   if keyword_set(diff) then myct,/diff,ncolors=30 else myct,33,ncolors=30
 
   ; Truncate data at latmin to avoid plotting outside the map window.
-  ; The default works well for the DC8 and NASA P3B during Spring ARCTAS
+  ; The default works well for the DC8 and NASA ER2 during SEAC4RS 
   IND = where(lat ge latmin)
 
   ; Plot the data, coloring the points by value

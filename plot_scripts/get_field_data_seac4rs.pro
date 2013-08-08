@@ -62,7 +62,7 @@
 ;           gc_data/ :  GEOS-Chem data with one file per
 ;                       platform and flight date
 ;
-;        !SENEX is a system variable defining the user's root SENEX data 
+;        !SEAC4RS is a system variable defining the user's root SEAC4RS data 
 ;        directory  e.g. ~/3Campiagn/SEAC4RS
 ;
 ; EXAMPLE:
@@ -82,7 +82,7 @@
 ; this software. If this software shall be used commercially or
 ; sold as part of a larger package, please contact the author.
 ; Bugs and comments should be directed to cdh@io.as.harvard.edu
-; with subject "IDL routine get_field_data_arctas"
+; with subject "IDL routine get_field_data_seac4rs"
 ;-----------------------------------------------------------------------
 
 
@@ -448,7 +448,7 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
   ; is passed as a scalar (for shorthand)
   ;--------------------------------------------------------------
 
-  ; Number of platforms (e.g. WP3D) and flight dates
+  ; Number of platforms (e.g. DC8) and flight dates
   ; Note that both Platforms and FlightDates can be '*'
   N_Platforms = n_elements( Platform )
   N_Dates     = n_elements( FlightDates )
@@ -548,11 +548,11 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
 ;  If Keyword_Set( NoCities ) then begin
 ; 
 ;    ; We need to read latitude, longitude and altitude
-;    lat = get_field_data_arctas( 'lat', Platform, Flightdates, $
+;    lat = get_field_data_seac4rs( 'lat', Platform, Flightdates, $
 ;                                 avgtime=avgtime, minavg=minavg )
-;    lon = get_field_data_arctas( 'lon', Platform, Flightdates, $
+;    lon = get_field_data_seac4rs( 'lon', Platform, Flightdates, $
 ;                                 avgtime=avgtime, minavg=minavg )
-;    alt = get_field_data_arctas( 'alt', Platform, Flightdates, $
+;    alt = get_field_data_seac4rs( 'alt', Platform, Flightdates, $
 ;                                 avgtime=avgtime, minavg=minavg )
 ; 
 ;    ; In the following searches, we locate and exclude observations

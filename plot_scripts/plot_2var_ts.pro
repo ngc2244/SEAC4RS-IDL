@@ -7,7 +7,7 @@
 ; PURPOSE:
 ;        This program plots time series of two variables against the
 ;        day of year. (double-y plot) This plot routine is customized
-;        for ARCTAS to quickly plot model or observations along a
+;        for SEAC4RS to quickly plot model or observations along a
 ;        flight track. It is ideal for plotting concentrations and altitude.
 ;
 ; CATEGORY:
@@ -17,11 +17,11 @@
 ;        Keywords] 
 ;
 ; INPUTS:
-;        VAR1      - Name of a variable on one of the ARCTAS
+;        VAR1      - Name of a variable on one of the SEAC4RS
 ;                    measurement platforms, or in the GEOS-Chem NRT.
 ;                    e.g. 'CO', 'AOD500', 'ALTP'
 ;        PLATFORM1 - Name of the Platform from which VAR1 was
-;                    measured, i.e. 'DC8', 'P3B'
+;                    measured, i.e. 'DC8', 'ER2'
 ;  
 ;        FLIGHTDATES - (optional) dates for which VAR1 is
 ;                      desired. Default is all flights. 
@@ -46,15 +46,15 @@
 ;
 ; EXAMPLE:
 ;        ; Simplest usage, plots CO and Altitude for all DC8 flights
-;        PLOT_2VAR_TS, 'CO', 'DC8', '20130809'
+;        PLOT_2VAR_TS, 'CO', 'DC8', '20130806'
 ;
 ;        ; GEOS-Chem simulation of the previous observations
-;        PLOT_2VAR_TS, 'CO', 'DC8', '20130809', /Model
+;        PLOT_2VAR_TS, 'CO', 'DC8', '20130806', /Model
 ;
 ;        ; We can compare Observations and Model with altitude:
-;        PLOT_2Var_TS, 'CO', 'DC8', '20130809'
-;        co_mod  = GET_MODEL_DATA_SEAC4RS( 'CO',  'DC8', '20130809')
-;        doy_mod = GET_MODEL_DATA_SEAC4RS( 'DOY', 'DC8', '20130809')
+;        PLOT_2Var_TS, 'CO', 'DC8', '20130806'
+;        co_mod  = GET_MODEL_DATA_SEAC4RS( 'CO',  'DC8', '20130806')
+;        doy_mod = GET_MODEL_DATA_SEAC4RS( 'DOY', 'DC8', '20130806')
 ;        OPLOT, DOY_MOD, CO_MOD, COLOR=2
 ;
 ; MODIFICATION HISTORY:

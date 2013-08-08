@@ -6,7 +6,7 @@
 ;
 ; PURPOSE:
 ;        Plot a given species measured on the SEAC4RS aircraft or modeled
-;        by GEOS-Chem on a domain appropriate for the SENEX missions.
+;        by GEOS-Chem on a domain appropriate for the SEAC4RS missions.
 ;
 ; CATEGORY:
 ;
@@ -41,13 +41,13 @@
 ;        SEAC4RS_MAP
 ;
 ; NOTES:
-;    (1) This routine will not work for dates outside of the SENEX dates.
+;    (1) This routine will not work for dates outside of the SEAC4RS dates.
 ;        Modify this part of the code to use for other campaigns.
 ;    (2) If data is not found for the given species / platform / date
 ;        combination, this routine will return to the calling program.
 ;
 ; EXAMPLE:
-;    SEAC4RS_SPECIESMAP,'CO','DC8',FlightDates='FAIRBANKS', $
+;    SEAC4RS_SPECIESMAP,'CO','DC8',FlightDates='*', $
 ;                      MinData=0, MaxData=200,/Troposphere,/Model
 ;
 ;    Plots modeled CO from the DC8 flighttrack for all flights based
@@ -68,7 +68,7 @@
 ; this software. If this software shall be used commercially or
 ; sold as part of a larger package, please contact the author.
 ; Bugs and comments should be directed to bmy@io.as.harvard.edu
-; or phs@io.as.harvard.edu with subject "IDL routine arctas_speciesmap"
+; or phs@io.as.harvard.edu with subject "IDL routine seac4rs_speciesmap"
 ;-----------------------------------------------------------------------
 
 pro seac4rs_speciesmap, species, platform, flightdates=flightdates, $
@@ -103,7 +103,6 @@ if N_Elements(model) eq 0 then model = 0
 
 ; Get either modeled or observed data
 if keyword_set(model) then begin
-	print,'here!'
 	data = get_model_data_seac4rs(species,platform,flightdates, $
 	                             _extra=_extra)
 	lat = get_model_data_seac4rs('lat',platform,flightdates, $
@@ -130,40 +129,6 @@ data = data(index)
 lat = lat(index)
 lon = lon(index)
 endif
-
-; We set the plotting region based on the phase of the
-; deployment that we are in. The phase is determined based on the
-; first date in the series, which is set manually if one of the
-; keywords is used instead of a flightdates.
-;
-; If all flights are being plotted, we use the same plotting
-; region as Cold Lake, since that region extend further south.
-;
-; If the date is not in the ARCTAS date window, return to
-; calling program.
-
-;if strlowcase(flightdates(0) eq 'fairbanks' or $
-;              flightdates(0) eq 'fairbanks_ams' or $
-;              flightdates(0) eq 'fairbanks_saga')  then begin
-;              fd_temp = 20080331
-;endif else if strlowcase(flightdates(0)) eq 'carb' then begin
-;              fd_temp = 20080618
-;endif else if strlowcase(flightdates(0)) eq 'coldlake' $
-;           or flightdates(0) eq '2008*'                $
-;           or flightdates(0) eq '*'                then begin
-;              fd_temp = 20080626
-;endif else    fd_temp = long(flightdates(0))
-
-; Add by lei
-fd_temp = long(flightdates(0))
-
-;if      fd_temp ge 20080331 and fd_temp le 20080419 then latmin = 55 $
-;else if fd_temp ge 20080626 and fd_temp le 20080712 then latmin = 45 $
-;else begin
-;   print, '************Not plotting ARCTAS dates! '
-;   print, '************For CARB dates, use special CARB routines!'
-;   return
-;endelse
 
 ; If MinData and/or MaxData are not specified, use the min and max
 ; of the actual data 
@@ -199,9 +164,8 @@ if keyword_set(save) then begin
      	!p.font = 0 
 endif
  
-; Plot the data on a polar orthographic projection of the N. America sector
-; For SENEX, no projection is used
-senex_map, lon, lat, data, latmin=latmin, zmin=mindata, zmax=maxdata, $
+; Plot the data over the US
+seac4rs_map, lon, lat, data, latmin=latmin, zmin=mindata, zmax=maxdata, $
             title=title, _extra=_extra
  
 if keyword_set(save) then close_device
