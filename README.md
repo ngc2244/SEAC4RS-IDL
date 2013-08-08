@@ -1,4 +1,4 @@
-SEAC4RS-IDL, by Jenny Fisher and Lei Zhu, 08/06/2013
+SEAC4RS-IDL, by Jenny Fisher and Lei Zhu, 08/08/2013
 
 Purpose:
 SEAC4RS-IDL contains IDL scripts for creating, processing, and analysing aircraft data and GEOS-Chem output from the SEAC4RS campaign.
