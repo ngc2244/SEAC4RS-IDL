@@ -132,50 +132,23 @@ function read_file_model, file, field, ppt=ppt
     'acet'   :  conv_factor = 1e12/3 ; v/v c -> pptv
     'isop'   :  conv_factor = 1e12/5 ; v/v c -> ppbv
     'mek'    :  conv_factor = 1e12/4 ; v/v c -> pptv
+    'so4'    :  conv_factor = 1e12 ; mole/mole -> pptv
+    'so4s'   :  conv_factor = 1e12 ; mole/mole -> pptv
+    'dms'    :  conv_factor = 1e12 ; v/v -> pptv
+    'nh4'    :  conv_factor = 1e12 ; mole/mole -> pptv
+    'nh3'    :  conv_factor = 1e12 ; v/v -> pptv
+    'nit'    :  conv_factor = 1e12 ; mole/mole -> pptv
+    'no3'    :  conv_factor = 1e12 ; mole/mole -> pptv
+    'sox'    :  conv_factor = 1e12 ; v/v -> pptv
+    'oh'     :  conv_factor = 1e12 ; v/v -> pptv
+    'hno3'   :  conv_factor = 1e12; pptv
+    'ca'     : conv_factor = 1e12; pptv 
     else     :  conv_factor = 1
   endcase
 
-  ; Case for ARCTAS, comment out, lei
-  ;Case field of
-  ;  'co'  :    conv_factor = 1e9
-  ;  'hg0' :    conv_factor = 1e15 ; v/v -> ppqv
-  ;  'so2' :    conv_factor = 1e12 ; v/v -> pptv
-  ;  'so4' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'fa_so4' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'saga_so4' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'so4s':    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'dms' :    conv_factor = 1e12 ; v/v -> pptv
-  ;  'nh4' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'saga_nh4' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'nh3' :    conv_factor = 1e12 ; v/v -> pptv
-  ;  'nit' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'no3' :    conv_factor = 1e12 ; mole/mole -> pptv
-  ;  'sox' :    conv_factor = 1e12 ; v/v -> pptv
-  ;  'fa_sox' :    conv_factor = 1e12 ; v/v -> pptv
-  ;  'o3'  :    conv_factor = 1e9  ; v/v -> ppbv
-  ;  'oh'  :    conv_factor = 1e12 ; v/v -> pptv
-  ;  'no'  :    conv_factor = 1e12 ; pptv
-  ;  'hno3':    conv_factor = 1e12; pptv
-  ;  'ca'  :    conv_factor = 1e12; pptv 
-  ;  ; For tagged CO runs, we have several different CO types
-  ;  'cona'    :    conv_factor = 1e9
-  ;  'coeur'   :    conv_factor = 1e9
-  ;  'cosib'   :    conv_factor = 1e9
-  ;  'coas'    :    conv_factor = 1e9
-  ;  'cooth'   :    conv_factor = 1e9
-  ;  'cobna'   :    conv_factor = 1e9
-  ;  'cobeur'  :    conv_factor = 1e9
-  ;  'cobnsib' :    conv_factor = 1e9
-  ;  'cobssib' :    conv_factor = 1e9
-  ;  'cobas'   :    conv_factor = 1e9
-  ;  'coboth'  :    conv_factor = 1e9
-  ;  else:  conv_factor = 1
-  ;endcase
-
- ; Comment out below, not use aerosol, lei
- ;; always forget...
- ;if ( field eq 'no3') then field = 'nit'
- ;
+ if ( field eq 'no3') then field = 'nit'
+ 
+ ; May not need these in SEAC4RS, TBD (jaf, 8/8/13)
  ;; to use fine_aerosol_sulfate
  ;if ( field eq 'fa_so4' ) then field = 'so4' 
  ;if ( field eq 'fa_sox' ) then field = 'sox' 
@@ -184,99 +157,98 @@ function read_file_model, file, field, ppt=ppt
  ;if ( field eq 'saga_so4' ) then field = 'so4' 
  ;if ( field eq 'saga_nh4' ) then field = 'nh4' 
  ;if ( field eq 'saga_no3' ) then field = 'nit' 
- ;
- ;if ( ~keyword_set(ppt) and (field eq 'so4' or field eq 'so4s' $
- ;      or field eq 'nh4' or field eq 'nit') ) then begin
- ;   ; first get nmol/m3 (independent of species)
- ;   conv_factor = conv_factor * (1.29 / 28.97)
- ;   ; next use appropriate molar mass for conversion to ug/m3
- ;   ; use nmole/m3 instead of ug/m3
-;;    case field of
-;;         'so4'  : conv_factor = conv_factor * 96d-3
-;;         'so4s' : conv_factor = conv_factor * 96d-3
-;;         'nh4'  : conv_factor = conv_factor * 18d-3
-;;         'nit'  : conv_factor = conv_factor * 62d-3
-;;    endcase
- ;endif
+ 
+ if ( ~keyword_set(ppt) and (field eq 'so4' or field eq 'so4s' $
+       or field eq 'nh4' or field eq 'nit') ) then begin
+    ; first get nmol/m3 (independent of species)
+    conv_factor = conv_factor * (1.29 / 28.97)
+    ; next use appropriate molar mass for conversion to ug/m3
+    ; use nmole/m3 instead of ug/m3
+    case field of
+         'so4'  : conv_factor = conv_factor * 96d-3
+         'so4s' : conv_factor = conv_factor * 96d-3
+         'nh4'  : conv_factor = conv_factor * 18d-3
+         'nit'  : conv_factor = conv_factor * 62d-3
+    endcase
+ endif
 
   ; Open the Data file
   Restore, File
 
   ; For AOD, we need to add lots of fields together
-  ; Comment out, lei
-  ;If StRegex( field, '^aod[0-9]*$', /Boolean ) then begin
-  ;
-  ;  Print, 'Reading model AOD entries from file: '+ file +' ...'
-  ;  
-  ;  ; AOD above the aircraft altitude = Column - (col below aircraft)
-  ;  Data =  gc.aodc_sulf + gc.aodc_blkc + gc.aodc_orgc + $
-  ;          gc.aodc_sala + gc.aodc_salc - $
-  ;        ( gc.aodb_sulf + gc.aodb_blkc + gc.aodb_orgc + $
-  ;         gc.aodc_sala + gc.aodc_salc )
+  If StRegex( field, '^aod[0-9]*$', /Boolean ) then begin
+  
+    Print, 'Reading model AOD entries from file: '+ file +' ...'
+    
+    ; AOD above the aircraft altitude = Column - (col below aircraft)
+    Data =  gc.aodc_sulf + gc.aodc_blkc + gc.aodc_orgc + $
+            gc.aodc_sala + gc.aodc_salc - $
+          ( gc.aodb_sulf + gc.aodb_blkc + gc.aodb_orgc + $
+           gc.aodc_sala + gc.aodc_salc )
 
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
 
-  ;; For SOx, we need to add fields together
-  ;endif else If ( field eq 'sox' ) then begin
-  ;
-  ;  Print, 'Reading model SOx from file: '+ file +' ...'
-  ;  
-  ;  Data =  gc.so2 + gc.so4
-  ;
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
-  ;
-  ;endif else If ( field eq 'nh4_so4_ratio' ) then begin
-  ; 
-  ;  Print, 'Reading model Ammonium & Sulphate from file: '+ file +' ...'
-  ;  
-  ;  Data =  gc.nh4 / gc.so4
-  ;
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
-  ;
-  ;endif else If ( field eq 'dust' ) then begin
-  ;
-  ;  Print, 'Reading model dust from file: '+ file +' ...'
-  ;  
-  ;  Data =  gc.dst1 + gc.dst2 + gc.dst3 + gc.dst4
-  ;
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
-  ;
-  ;endif else If ( field eq 'ca' ) then begin
-  ;
-  ;  Print, 'Reading model Ca from file: '+ file +' ...'
-  ;
-  ;  ; sum up data, and convert to v/v using assumption of 3% by mass
-  ;  Data =  0.03 * (gc.dst1 + gc.dst2 + gc.dst3 + gc.dst4) * (29/40.) * 0.5
-  ;  ; added 0.5 to match Duncan's dust source...
-  ;
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
-  ;
-  ;endif else If ( field eq 'oc' ) then begin
-  ;
-  ;  Print, 'Reading model OC from file: '+ file +' ...'
-  ;
-  ;  ; sum up data, and convert to ug/m3
-  ;  Data =  (gc.ocpi + gc.ocpo ) * (1e6*12) / 0.0224
-  ;
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
-  ;
-  ;endif else If ( field eq 'bc' ) then begin
-  ;
-  ;  Print, 'Reading model BC from file: '+ file +' ...'
-  ;
-  ;  ; sum up data, and convert to ng/m3
-  ;  Data =  (gc.bcpi + gc.bcpo ) * (1e9*12) / 0.0224
-  ;
-  ;  ; Status is success, as long as data contains some elements
-  ;  status = n_elements( data ) gt 1
-  ;
-  ;endif else begin
+  ; For SOx, we need to add fields together
+  endif else If ( field eq 'sox' ) then begin
+  
+    Print, 'Reading model SOx from file: '+ file +' ...'
+    
+    Data =  gc.so2 + gc.so4
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'nh4_so4_ratio' ) then begin
+   
+    Print, 'Reading model Ammonium & Sulphate from file: '+ file +' ...'
+    
+    Data =  gc.nh4 / gc.so4
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'dust' ) then begin
+  
+    Print, 'Reading model dust from file: '+ file +' ...'
+    
+    Data =  gc.dst1 + gc.dst2 + gc.dst3 + gc.dst4
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'ca' ) then begin
+  
+    Print, 'Reading model Ca from file: '+ file +' ...'
+  
+    ; sum up data, and convert to v/v using assumption of 3% by mass
+    Data =  0.03 * (gc.dst1 + gc.dst2 + gc.dst3 + gc.dst4) * (29/40.) * 0.5
+    ; added 0.5 to match Duncan's dust source...
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'oc' ) then begin
+  
+    Print, 'Reading model OC from file: '+ file +' ...'
+  
+    ; sum up data, and convert to ug/m3
+    Data =  (gc.ocpi + gc.ocpo ) * (1e6*12) / 0.0224
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'bc' ) then begin
+  
+    Print, 'Reading model BC from file: '+ file +' ...'
+  
+    ; sum up data, and convert to ng/m3
+    Data =  (gc.bcpi + gc.bcpo ) * (1e9*12) / 0.0224
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else begin
 
     ;----------
     ; All fields except AOD & SOx read here
@@ -330,9 +302,6 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
   If n_elements(avgtime) eq 0 then avgtime='10m'
   If keyword_set(hravg) then avgtime='10m'
 
-  ; temporary compatibility with SAGA merges
-  ;if avgtime eq 'SAGA' then avgtime='saga'
-  
   ; AltDir can be set later on, lei
   If Keyword_Set( AltDir ) then begin
      Model_dir = !SEAC4RS+'/gc_data/'
@@ -348,45 +317,6 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
     PLATFORM = 'DC8'
   If n_params() eq 2 then $
     FlightDates = '2013*'
-
-  ; Comment out, lei  
-  ;If StrMatch( Platform[0], 'WP3D', /fold_case ) then begin
- 
-    ; Flightdates can be set as 'FAIRBANKS','CARB', or 'COLDLAKE'
-    ; 20080626 is counted as both a CARB flight and a COLDLAKE
-    ; flight because it left from Palmdale and arrived in Cold Lake
-    ;If strlowcase(FlightDates_in[0]) eq 'fairbanks' then begin
-    ;   Flightdates = ['20080401','20080404','20080405','20080408',$
-    ;                  '20080409','20080412','20080416','20080417',$
-    ;                  '20080419']
-    ;endif else if strlowcase(FlightDates_in[0]) eq 'fairbanks_ams' then begin 
-    ;   Flightdates = ['20080405','20080408','20080409','20080412',$
-    ;                  '20080416','20080417','20080419']
-    ;endif else if strlowcase(FlightDates_in[0]) eq 'fairbanks_saga' then begin 
-    ;   Flightdates = ['20080409','20080412',$
-    ;                  '20080416','20080417','20080419']
-    ;endif else if strlowcase(FlightDates_in[0]) eq 'carb' then begin 
-    ;   Flightdates = ['20080618','20080620','20080622','20080624',$
-    ;                  '20080626']
-    ;endif else if strlowcase(FlightDates_in[0]) eq 'coldlake' then begin 
-    ;   Flightdates = ['20080626','20080629','20080701','20080704',$
-    ;                  '20080705','20080708','20080709','20080710',$
-    ;                  '20080713']
-    ;endif
- 
-  ;endif else if StrMatch( Platform[0], 'P3B', /fold_case ) then begin
-  ;  If strlowcase(FlightDates_in[0]) eq 'fairbanks' then begin
-  ;     Flightdates = ['20080331','20080401','20080406','20080408',$
-  ;                    '20080409','20080413','20080415','20080419']
-  ;  endif else if strlowcase(FlightDates_in[0]) eq 'carb' then begin 
-  ;     Flightdates = ['20080622','20080624','20080626']
-  ;  endif else if strlowcase(FlightDates_in[0]) eq 'coldlake' then begin 
-  ;     Flightdates = ['20080626','20080628','20080629','20080630',$
-  ;                    '20080702','20080703','20080706','20080707',$
-  ;                    '20080709','20080712']
-  ;  endif
- 
-  ;  endif
 
   ;--------------------------------------------------------------
   ; In order to read multiple dates or platforms
@@ -443,8 +373,8 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
 
   ; Neutralization
   ; Currently not used, lei
-  if ( field eq 'acid') then data=get_model_acid_seac4rs(flightdates) $
-  else begin
+;  if ( field eq 'acid') then data=get_model_acid_seac4rs(flightdates) $
+;  else begin
 
   ; Loop over the number of distinct Platforms or FlightDates
   ; Note: If FlightDates='*', then it's only one loop iteration here
@@ -461,9 +391,6 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
       if avgtime eq '60m' then $
       NewFiles = $
         MFindFile(Model_dir+'*60m*dc8*'+FlightDates[i]+'*.sav') else $
-      if avgtime eq 'saga' then $
-      NewFiles = $
-        MFindFile(Model_dir+'*SAGA*'+FlightDates[i]+'*.sav') else $
       return, 'No '+platform[i]+' files for averaging time '+avgtime
 
     endif else if StrMatch( Platform[i], 'ER2', /fold_case ) then begin
@@ -480,7 +407,7 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
 
       ; Keep only the files that have single flights to avoid duplicate data
       ; in the files that contain multiple flights
-      ;NewFiles = NewFiles[ where( StrMatch( NewFiles, '*2008????.sav' ) eq 1) ]
+      NewFiles = NewFiles[ where( StrMatch( NewFiles, '*2013????.sav' ) eq 1) ]
 
      ; Loop over the number of files found
       ; Read the data from each
@@ -496,7 +423,7 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
 
   endfor
 
-  endelse ;neutralization
+;  endelse ;neutralization
 
   ; Return NaN if no data were found, 
   ; otherwise drop the first element which is initialized to 0
@@ -505,47 +432,47 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
     if ( field ne 'acid' ) then Data = Data[1:*]
  
  ; Comment out, lei
-  ; If keyword NoCities, then filter the data to remove observations
-  ; near Fairbanks, Barrow and Prudhoe Bay (i.e. point sources)
-  ;If Keyword_Set( NoCities ) then begin
-
-    ; We need to get latitude, longitude and altitude
-  ;  lat = get_model_data_arctas( 'lat', Platform, Flightdates )
-  ;  lon = get_model_data_arctas( 'lon', Platform, Flightdates )
-  ;  alt = get_model_data_arctas( 'alt', Platform, Flightdates )
-
-    ; In the following tests, we want to eliminate the grid boxes
-    ; containing these cities. We are using the 2x2.5 simulation
-    ; So if the latitude and longitude are within 1.5 degrees, the 
-    ; observation is in the same box as the city.
-    ; (At these latitudes, 1deg longitude = 20-25mi)
-
-    ; Define the region near Fairbanks 
-  ;  ind_Fairbanks = where( abs( lat - 64.8  ) le 1.5 and $
-  ;                         abs( lon + 147.9 ) le 1.5 and $
-  ;                         alt le 2, $
-  ;                         complement=cind_Fairbanks )
-
-    ; Define the region near Barrow
-  ;  ind_Barrow    = where( abs( lat - 76.5  ) le 1.5 and $
-  ;                         abs( lon + 156.8 ) le 1.5 and $
-  ;                         alt le 2, $
-  ;                         complement=cind_Barrow )
-
-    ; Define the region near Prudhoe Bay 
-  ;  ind_PrudBay   = where( abs( lat - 70.3  ) le 1.5 and $
-  ;                         abs( lon + 148.4 ) le 1.5 and $
-  ;                         alt le 2, $
-  ;                         complement=cind_PrudBay )
-
-    ; Find the intersection of all indices outside cities
-  ;  ind_noCities = cmset_op( cind_Fairbanks, 'AND', cind_Barrow  )
-  ;  ind_noCities = cmset_op( cind_PrudBay,   'AND', ind_noCities )
-
-    ; Limit the data to points outside cities
-  ;  Data = Data[ind_noCities]
-  
-  ;endif
+;  ; If keyword NoCities, then filter the data to remove observations
+;  ; near Fairbanks, Barrow and Prudhoe Bay (i.e. point sources)
+;  If Keyword_Set( NoCities ) then begin
+;
+;    ; We need to get latitude, longitude and altitude
+;    lat = get_model_data_arctas( 'lat', Platform, Flightdates )
+;    lon = get_model_data_arctas( 'lon', Platform, Flightdates )
+;    alt = get_model_data_arctas( 'alt', Platform, Flightdates )
+;
+;    ; In the following tests, we want to eliminate the grid boxes
+;    ; containing these cities. We are using the 2x2.5 simulation
+;    ; So if the latitude and longitude are within 1.5 degrees, the 
+;    ; observation is in the same box as the city.
+;    ; (At these latitudes, 1deg longitude = 20-25mi)
+;
+;    ; Define the region near Fairbanks 
+;    ind_Fairbanks = where( abs( lat - 64.8  ) le 1.5 and $
+;                           abs( lon + 147.9 ) le 1.5 and $
+;                           alt le 2, $
+;                           complement=cind_Fairbanks )
+;
+;    ; Define the region near Barrow
+;    ind_Barrow    = where( abs( lat - 76.5  ) le 1.5 and $
+;                           abs( lon + 156.8 ) le 1.5 and $
+;                           alt le 2, $
+;                           complement=cind_Barrow )
+;
+;    ; Define the region near Prudhoe Bay 
+;    ind_PrudBay   = where( abs( lat - 70.3  ) le 1.5 and $
+;                           abs( lon + 148.4 ) le 1.5 and $
+;                           alt le 2, $
+;                           complement=cind_PrudBay )
+;
+;    ; Find the intersection of all indices outside cities
+;    ind_noCities = cmset_op( cind_Fairbanks, 'AND', cind_Barrow  )
+;    ind_noCities = cmset_op( cind_PrudBay,   'AND', ind_noCities )
+;
+;    ; Limit the data to points outside cities
+;    Data = Data[ind_noCities]
+;  
+;  endif
 
   ;--------------------------------------------------------------
   ; If keyword TROPOSPHERE, then exclude data where [O3]/[CO] > 1.25 

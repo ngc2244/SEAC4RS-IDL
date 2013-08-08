@@ -134,38 +134,6 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   ;  else:
   ;endcase
 
-  ; Case for ARCTAS, comment out, lei 
-  ;Case field of
-  ;  'alt': field = 'GPSAlt'
-  ;  'lat': field = 'latitude'
-  ;  'lon': field = 'longitude'
-  ;  'co' : if platform eq 'wp3d' then $
-  ;	      field = 'CO'
-  ;  'hg0': field = 'Hg' 
-  ;  'ch4': field = 'methane_mixing_ratio' 
-  ;  'co2': field = 'co2_mixing_ratio'
-  ;  'hcn': field = 'hcn_cit'
-  ;  'fa_so4': field = 'fine_aerosol_sulfate'
-  ;  'so4': if platform eq 'dc8' then field = 'sulphate' $
-  ;         else field = 's04_prelim'
-  ;  'nh4': if platform eq 'dc8' then field = 'ammonium' $
-  ;         else field = 'nh4__prelim'
-  ;  'no3': if platform eq 'dc8' then field = 'nitrate' $
-  ;         else field = 'no3__prelim'
-  ;  'bc' : field = 'bc_mass_1013hpa_273k'
-  ;  'isop': field = 'isoprene'
-  ;  'aod350': field = 'aerosol_optical_depth_353_5nm'
-  ;  'aod380': field = 'aerosol_optical_depth_380_0nm'
-  ;  'aod450': field = 'aerosol_optical_depth_452_6nm'
-  ;  'aod500': field = 'aerosol_optical_depth_499_4nm'
-  ;  'aod520': field = 'aerosol_optical_depth_519_4nm'
-  ;  'aod605': field = 'aerosol_optical_depth_605_8nm'
-  ;  'aod675': field = 'aerosol_optical_depth_675_1nm'
-  ;  'rea_o1d':field = 'JO3_O2_O1D'
-  ;  'rea_no2':field = 'JNO2'
-  ;  else:
-  ;endcase
-
   ; Open the Data file
   Restore, File
 
@@ -404,53 +372,6 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   ;    ; Calculate molar ratio
   ;    Data = ( 96./18. ) * ( ammonium/sulphate )
 
-  ; Special case for P3B fields
-  ; Comment out, lei
-  ;endif else if field eq 's04_prelim' then begin
-  ;
-  ;    Print, 'Reading fields for SO4 from file: '+file+' ...'
-  ; 
-  ;    ; Read the time UTC
-  ;    s = 'so4 = ' + Platform + '.S04_prelim'
-  ;    status = Execute( s )  
-  ;
-  ;    if (keyword_set(ppt)) then $
-  ;    ; Convert units from ug/m3 to ppt
-  ;    Data = ( 28.97 / (96.*1.29) ) * 1d3 * so4 $
-  ;    else $
-  ;    ; Convert from ug/m3 to nmol/m3
-  ;    Data = ( 1d3 / 96. ) * so4 
- 
-  ;endif else if field eq 'nh4__prelim' then begin
-  ;
-  ;    Print, 'Reading fields for NH4 from file: '+file+' ...'
-  ; 
-  ;    ; Read the time UTC
-  ;    s = 'nh4 = ' + Platform + '.NH4__prelim'
-  ;    status = Execute( s )  
-  ;
-  ;    if (keyword_set(ppt)) then $
-  ;    ; Convert units from ug/m3 to ppt
-  ;    Data = ( 28.97 / (18.*1.29) ) * 1d3 * nh4 $
-  ;    else $
-  ;    ; Convert from ug/m3 to nmol/m3
-  ;    Data = (1d3 / 18.) * nh4 
-  ;
-  ;endif else if field eq 'no3__prelim' then begin
-  ;
-  ;    Print, 'Reading fields for NO3 from file: '+file+' ...'
-  ; 
-  ;    ; Read the time UTC
-  ;    s = 'no3 = ' + Platform + '.NO3__prelim'
-  ;    status = Execute( s )  
-  ;
-  ;    if (keyword_set(ppt)) then $
-  ;    ; Convert units from ug/m3 to ppt
-  ;    Data = ( 28.97 / (62.*1.29) ) * 1d3 * no3 $
-  ;    else $
-  ;    ; Convert from ug/m3 to nmol/m3
-  ;    Data = ( 1d3 / 62. ) * no3 
-  ;
   ;endif else If field eq 'oc' then begin
   ;
   ;    Print, 'Reading OC from file: '+file
@@ -509,7 +430,6 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
   ; Directories containing 60s merges from NASA
   ; and averages over GEOS-Chem grid and time resolution 
   If avgtime eq '60s' then mrgDir='merge_60s' $
-  else if avgtime eq 'saga' then mrgdir='merge_SAGAAERO' $
   else mrgDir = 'merge_'+avgtime+'_0.25x0.3125' 
 
   ; Error message informs user of correct usage 
@@ -518,50 +438,9 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
              'FLIGHTDATES )'
 
   ; Default values for optional parameters 
-  If n_params() eq 1 then $
-    PLATFORM = 'DC8'
-  If n_params() eq 2 then $
-    FlightDates = '*'
+  If n_params() eq 1 then PLATFORM = 'DC8'
+  If n_params() eq 2 then FlightDates = '*'
 
-    ; Comment out, lei
-    ;If StrMatch( Platform[0], 'WP3D', /fold_case ) then begin
- 
-      ; Flightdates can be set as 'FAIRBANKS','CARB', or 'COLDLAKE'
-      ; fairbanks_ams is to be used instead of fairbanks when using AMS
-      ; observations, which had problems on the first 2 flights
-     ; If strlowcase(FlightDates_in[0]) eq 'fairbanks' then begin
-     ;    Flightdates = ['20080401','20080404','20080405','20080408',$
-     ;                   '20080409','20080412','20080416','20080417',$
-     ;                   '20080419']
-     ; endif else if strlowcase(Flightdates_in[0]) eq 'fairbanks_ams' then begin 
-     ;    Flightdates = ['20080405','20080408','20080409','20080412',$
-     ; 			'20080416','20080417','20080419']
-     ; endif else if strlowcase(Flightdates_in[0]) eq 'fairbanks_saga' then begin 
-     ;    Flightdates = ['20080409','20080412',$
-     ;			'20080416','20080417','20080419']
-     ;     endif else if strlowcase(Flightdates_in[0]) eq 'carb' then begin 
-     ;     Flightdates = ['20080618','20080620','20080622','20080624',$
-     ;                     '20080626']
-     ;  endif else if strlowcase(Flightdates_in[0]) eq 'coldlake' then begin 
-     ;    Flightdates = ['20080626','20080629','20080701','20080704',$
-     ;                   '20080705','20080708','20080709','20080710',$
-     ;                   '20080713']
-
-     ; endif
- 
-    ;endif else if StrMatch( Platform[0], 'P3B', /fold_case ) then begin
-    ;  If strlowcase(FlightDates_in[0]) eq 'fairbanks' then begin
-    ;     Flightdates = ['20080331','20080401','20080406','20080408',$
-    ;                    '20080409','20080413','20080415','20080419' ]
-    ;  endif else if strlowcase(Flightdates_in[0]) eq 'carb' then begin 
-    ;     Flightdates = ['20080622','20080624','20080626']
-    ;  endif else if strlowcase(Flightdates_in[0]) eq 'coldlake' then begin 
-    ;     Flightdates = ['20080626','20080628','20080629','20080630',$
-    ;                    '20080702','20080703','20080706','20080707',$
-    ; 			'20080709','20080712']
-    ; endif
- 
-   ; endif
  ;--------------------------------------------------------------
   ; In order to read multiple dates or platforms
   ; we need to have equal length string arrays for PLATFORM and FLIGHTDATES.
@@ -616,9 +495,9 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
   Data = [0]
 
   ; neutralization (nh4/[2*so4+no3])
-  ; Currently not used. lei
-  if ( field eq 'acid' ) then data=get_field_acid_senex(flightdates) $
-  else begin
+  ; Add this later (jaf, 8/8/13)
+  ;if ( field eq 'acid' ) then data=get_field_acid_seac4rs(flightdates) $
+  ;else begin
  
   ; Loop over the number of distinct Platforms or FlightDates
   ; Note: If FlightDates='*', then it's only one loop iteration here
@@ -653,58 +532,59 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
  
   endfor
 
-  endelse ;neutralization 
+  ;endelse ;neutralization 
   
   ; Return NaN if no data were found, 
   ; otherwise drop the first element which is initialized to 0
   If ( n_elements( Data ) eq 1 ) then $
     return, !Values.f_nan else $ 
-  ;   if ( field ne 'acid' ) then Data = Data[1:*]
+  if ( field ne 'acid' ) then Data = Data[1:*]
+
   ; Comment out, lei
-  ;--------------------------------------------------------------
-  ; If keyword NoCities, then filter the data to remove observations
-  ; near Fairbanks, Barrow and Prudhoe Bay (i.e. point sources)
-  ;--------------------------------------------------------------
-  ;If Keyword_Set( NoCities ) then begin
- 
-    ; We need to read latitude, longitude and altitude
-  ;  lat = get_field_data_arctas( 'lat', Platform, Flightdates, $
-  ;                               avgtime=avgtime, minavg=minavg )
-  ;  lon = get_field_data_arctas( 'lon', Platform, Flightdates, $
-  ;                               avgtime=avgtime, minavg=minavg )
-  ;  alt = get_field_data_arctas( 'alt', Platform, Flightdates, $
-  ;                               avgtime=avgtime, minavg=minavg )
- 
-    ; In the following searches, we locate and exclude observations
-    ; within 1.5 degrees of the source. 
-    ; (At these latitudes, 1deg longitude = 20-25mi)
- 
-    ; Define the region near Fairbanks 
-  ;  ind_Fairbanks = where( abs( lat - 64.8         ) le 1.5 and $
-  ;                         abs( lon - (-147.9+360) ) le 1.5 and $
+;  ;--------------------------------------------------------------
+;  ; If keyword NoCities, then filter the data to remove observations
+;  ; near Fairbanks, Barrow and Prudhoe Bay (i.e. point sources)
+;  ;--------------------------------------------------------------
+;  If Keyword_Set( NoCities ) then begin
+; 
+;    ; We need to read latitude, longitude and altitude
+;    lat = get_field_data_arctas( 'lat', Platform, Flightdates, $
+;                                 avgtime=avgtime, minavg=minavg )
+;    lon = get_field_data_arctas( 'lon', Platform, Flightdates, $
+;                                 avgtime=avgtime, minavg=minavg )
+;    alt = get_field_data_arctas( 'alt', Platform, Flightdates, $
+;                                 avgtime=avgtime, minavg=minavg )
+; 
+;    ; In the following searches, we locate and exclude observations
+;    ; within 1.5 degrees of the source. 
+;    ; (At these latitudes, 1deg longitude = 20-25mi)
+; 
+;    ; Define the region near Fairbanks 
+;    ind_Fairbanks = where( abs( lat - 64.8         ) le 1.5 and $
+;                           abs( lon - (-147.9+360) ) le 1.5 and $
 ;	                   alt le 2, $
- ;                          complement=cind_Fairbanks )
- 
-    ; Define the region near Barrow
-  ;  ind_Barrow    = where( abs( lat - 76.5         ) le 1.5 and $
-   ;                        abs( lon - (-156.8+360) ) le 1.5 and $
+;                           complement=cind_Fairbanks )
+; 
+;    ; Define the region near Barrow
+;    ind_Barrow    = where( abs( lat - 76.5         ) le 1.5 and $
+;                           abs( lon - (-156.8+360) ) le 1.5 and $
 ;	                   alt le 2, $
 ;                           complement=cind_Barrow )
- 
-    ; Define the region near Prudhoe Bay 
- ;   ind_PrudBay   = where( abs( lat - 70.3         ) le 1.5 and $
- ;                          abs( lon - (-148.4+360) ) le 1.5 and $
+; 
+;    ; Define the region near Prudhoe Bay 
+;    ind_PrudBay   = where( abs( lat - 70.3         ) le 1.5 and $
+;                           abs( lon - (-148.4+360) ) le 1.5 and $
 ;	                   alt le 2, $
- ;                          complement=cind_PrudBay )
- 
-    ; Find the intersection of all indices outside cities
- ;   ind_noCities = cmset_op( cind_Fairbanks, 'AND', cind_Barrow  )
- ;   ind_noCities = cmset_op( cind_PrudBay,   'AND', ind_noCities )
- 
-    ; Limit the data to points outside cities
- ;   Data = Data[ind_noCities]
-  
-  ;endif
+;                           complement=cind_PrudBay )
+; 
+;    ; Find the intersection of all indices outside cities
+;    ind_noCities = cmset_op( cind_Fairbanks, 'AND', cind_Barrow  )
+;    ind_noCities = cmset_op( cind_PrudBay,   'AND', ind_noCities )
+; 
+;    ; Limit the data to points outside cities
+;    Data = Data[ind_noCities]
+;  
+;  endif
  
   ;--------------------------------------------------------------
   ; If keyword TROPOSPHERE, then exclude data where [O3]/[CO] > 1.25 
