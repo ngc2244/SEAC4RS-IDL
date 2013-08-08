@@ -131,7 +131,7 @@ altp = altp*1d-3
 
 ; Get model output for given species 
 if (~keyword_set(obs_only)) then $
-species_mod = get_model_data_seac4rs(species_in, 'DC8',flightdates, $
+species_mod = get_model_data_seac4rs(species_in, platform,flightdates, $
               _extra=_extra)
 ; If no model output is available, set Obs_Only keyword and skip
 ; irrelevant commands
@@ -140,7 +140,7 @@ if (N_Elements(species_mod) eq 1 ) then obs_only=1
 if (~keyword_set(obs_only)) then begin
 
 ; Get other necessary model parameters, and interpolate model output 
-doy_mod = get_model_data_seac4rs('DOY', 'DC8', flightdates,_extra=_extra)
+doy_mod = get_model_data_seac4rs('DOY', platform, flightdates,_extra=_extra)
 species_mod = interpol( species_mod, doy_mod, doy )
  
 endif

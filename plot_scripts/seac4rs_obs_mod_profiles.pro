@@ -100,15 +100,15 @@ for i = 0, n_elements(flightdates)-1 do begin
                                     _extra = _extra)]
    lon =  [lon,get_field_data_seac4rs('lon',platform,flightdates[i], $
                                     _extra = _extra)]
-   doy =  [doy,get_field_data_seac4rs('doy','DC8',flightdates[i], $
+   doy =  [doy,get_field_data_seac4rs('doy',platform,flightdates[i], $
                                    _extra = _extra )]
  
    ; Read relevant model variables
    species_mod = [species_mod, $
-	get_model_data_seac4rs(species_in,'DC8',flightdates[i], $
+	get_model_data_seac4rs(species_in,platform,flightdates[i], $
                              _extra = _extra)]
    doy_mod = [doy_mod, $
-	get_model_data_seac4rs('DOY','DC8',flightdates[i], $
+	get_model_data_seac4rs('DOY',platform,flightdates[i], $
                             _extra = _extra )]
  
 nodata:
