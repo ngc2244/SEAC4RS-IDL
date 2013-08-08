@@ -99,40 +99,20 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   field = strlowcase( field )
   platform = strlowcase( platform )
 
-  ; Case for SEAC4RS, lei
-  ; Stay tuned
+  ; Names known so far; add more as needed
   Case field of
-  '***'       : field = '***'
+    'lat'    : field = 'Latitude'
+    'lon'    : field = 'Longitude'
+    'alt'    : field = 'GPS_Altitude'
+    'altp'   : field = 'Pressure_Altitude'
+    'no'     : field = 'NO_CL'
+    'no2'    : field = 'NO2_CL'
+    'noy'    : field = 'NOy_CL'
+    'o3'     : field = 'O3_CL'
+    'hcho'   : field = 'CH2O_LIF'
+    'bc'     : field = 'BC_mass_90_550_nm_HDSP2'
   else:
   endcase
-
-  ; Case for SENEX, lei
-  ; NOT used, comment, lei
-  ; Note: The AMS data are very preliminary as 
-  ; they have not incorporated their calibrations.
-  ; So here we only look at simpile species
-  ;Case field of
-  ;  'alt'    : field = 'GPSAlt'
-  ;  'lat'    : field = 'latitude'
-  ;  'lon'    : field = 'longitude'
-  ;  'chocho' : field = 'CHOCHO'
-  ;  'co'     : field = 'CO_ppbv'
-  ;  'hcho'   : field = 'HCHO_ppbv'
-  ;  'hno3'   : field = 'HNO3_ppbv'
-  ;  'hcooh'  : field = 'HCOOH_ppbv'
-  ;  'no'     : field = 'NO_ppbv'
-  ;  'no2'    : field = 'NO2_ppbv'
-  ;  'noy'    : field = 'NOy_ppbv'
-  ;  'o3'     : field = 'O3_ppbv'
-  ;  'so2'    : field = 'SO2_ppbv'
-  ;  'pan'    : field = 'PAN_ppbv'
-  ;   'ppn'    : field = 'PPN_ppbv'
-  ;   'ald2'   : field = 'acetaldehyde_pptv'
-  ;  'acet'   : field = 'acetone_pptv'
-  ;  'isop'   : field = 'isoprene_pptv'
-  ;  'mek'    : field = 'MEK_pptv'
-  ;  else:
-  ;endcase
 
   ; Open the Data file
   Restore, File
