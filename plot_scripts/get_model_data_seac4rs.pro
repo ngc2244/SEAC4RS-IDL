@@ -143,6 +143,15 @@ function read_file_model, file, field, ppt=ppt
     'oh'     :  conv_factor = 1e12 ; v/v -> pptv
     'hno3'   :  conv_factor = 1e12; pptv
     'ca'     : conv_factor = 1e12; pptv 
+    'pcofse' :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcofne' :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcofw'  :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcofrw' :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcobse' :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcobcn' :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcobw'  :  conv_factor = 1e9    ; v/v -> ppbv
+    'pcobrw' :  conv_factor = 1e9    ; v/v -> ppbv
+    'pisop'  :  conv_factor = 1e12/5 ; v/v c -> ppbv
     else     :  conv_factor = 1
   endcase
 
