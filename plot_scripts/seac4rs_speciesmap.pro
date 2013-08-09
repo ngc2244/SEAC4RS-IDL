@@ -95,7 +95,7 @@ endif
 ;	print, 'You didn''t specify pressure, so all pressures are being plotted!'
 ;endif
 if N_Elements(alts) eq 0 then begin
-	alts=[0, 12]
+	alts=[0, 20]
 	print, 'You didn''t specify altitude, so all altitudes are being plotted!'
 endif
 if N_Elements(model) eq 0 then model = 0 
