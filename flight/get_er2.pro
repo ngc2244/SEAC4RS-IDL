@@ -108,8 +108,13 @@ function ER2_LineSplit, Line
    ; (bmy, 5/16/05, Lei, 08/08/2013)
    ;====================================================================
 
-   ; First try to break the line by commas ...
-   Result = StrBreak( Line, ',' )
+   ; Update for ER2 (jaf, 8/9/13) 
+   ; First try to break the line by comma+space ...
+   Result = StrBreak( Line, ', ' )
+
+   ; ... then if that doesn't work, try commas ...
+   if ( N_Elements( Result ) eq 1 ) $
+      then Result = StrBreak( Line, ',' )
 
    ; ... then if that doesn't work, try spaces
    if ( N_Elements( Result ) eq 1 ) $
@@ -206,20 +211,19 @@ pro Get_ER2, FileNames,  $
  
       ; Get # of lines in the header
       N_Hdr = Long( Result[0] )
-      print, N_Hdr
+
       ; Skip header 
       for N = 0L, N_Hdr-2L do begin
- 	 print, N, N_Hdr-2L
+ 	 
          ; Read each lines
          ReadF, Ilun_Flt, Line
-	 print, line
+
          ;------------------------
          ; Get the starting date 
          ;------------------------
 	 if (N eq 5 ) then begin 
             ; Split the line
             Result = ER2_LineSplit( Line )
-	    print, Result
 
             ; Save into variables
             Year   = Long( Result[0] )
@@ -233,6 +237,36 @@ pro Get_ER2, FileNames,  $
             Undefine, Result
          endif
 
+         ;------------------------
+         ; Get the scaling factors 
+         ;------------------------
+	 if (N eq 9 ) then begin 
+            ; Split the line
+            Result = ER2_LineSplit( Line )
+
+            ; Save into variables
+            ; Time values not included in header
+            Scaling_Factors = [1.,Result]
+
+            ; Undefine
+            Undefine, Result
+         endif
+
+         ;------------------------
+         ; Get the missing flags
+         ;------------------------
+	 if (N eq 10 ) then begin 
+            ; Split the line
+            Result = ER2_LineSplit( Line )
+
+            ; Save into variables
+            ; Time values not included in header
+            Missing_Flags = [long(-9999),Result]
+
+            ; Undefine
+            Undefine, Result
+         endif
+
          ;-------------------------------
          ; Parse line for airplane type
          ;-------------------------------
@@ -240,7 +274,7 @@ pro Get_ER2, FileNames,  $
             if ( StrPos( Line, 'DC-8' ) ge 0 ) then Plane = 'DC8'
             if ( StrPos( Line, 'ER-2' ) ge 0 ) then Plane = 'ER2' 
          endif
- 	 print, Plane
+
          ; Parse line for flight number 
          if ( StrPos( Line, 'This is Flight' ) ge 0 ) then begin 
 
@@ -284,7 +318,7 @@ pro Get_ER2, FileNames,  $
             ; Find the columns for TIME, LAT, LON, and STATIC PRESSURE
 	    ; Minor changes for SEAC4RS ER2 data, lei, 08/08/2013
             IndTime = Where( Result eq 'TIME_UTC' )
-            IndLat  = Where( Result eq 'G_LAT'    )
+            IndLat  = Where( strtrim(Result) eq 'G_LAT'    )
             IndLon  = Where( Result eq 'G_LONG'   )
             IndPrs  = Where( Result eq 'P'        )
 
@@ -295,7 +329,7 @@ pro Get_ER2, FileNames,  $
             if ( IndPrs[0]  lt 0 ) then Message, 'P not found!'
 
             ; Undefine 
-            UnDefine, Result
+;            UnDefine, Result
          endif
       endfor
 
@@ -303,6 +337,16 @@ pro Get_ER2, FileNames,  $
       if ( StrLen( StrTrim( FltNum, 2 ) ) gt 0 )                $
          then FltId = Plane + String( FltNum, Format='(i2.2)' ) $
          else FltId = Plane + FltNum
+
+      ; Make flags, scaling factors for individual variables
+      ScaleTime = Scaling_Factors[IndTime]
+      ScaleLat  = Scaling_Factors[IndLat]
+      ScaleLon  = Scaling_Factors[IndLon]
+      ScalePrs  = Scaling_Factors[IndPrs]
+      MissingTime = Missing_Flags[IndTime]
+      MissingLat  = Missing_Flags[IndLat]
+      MissingLon  = Missing_Flags[IndLon]
+      MissingPrs  = Missing_Flags[IndPrs]
 
       ;====================================================================
       ; Read lat, lon, and time from flight track file into arrays
@@ -318,26 +362,27 @@ pro Get_ER2, FileNames,  $
          Result = ER2_LineSplit( Line )
  
          ; Seconds after midnight
-	 ; I think there is NO scaling factor for TIME_UTC,
-	 ; even it's given as 0.01 in the data. lei, 08/08/2013
+	 ; NO scaling factor for TIME_UTC (not included in header)
          Sec = Double( Result[IndTime] )
 
          ; Latitude
 	 ; Time 0.00001 according to the data, lei, 08/08/2013
-	 IF( Result[IndLat] ne -9999999 )             $
-         THEN Lat = Float( Result[IndLat]*0.00001 )   $
+         ; Use values read from header (jaf, 8/9/13)
+	 IF( Result[IndLat] ne MissingLat )             $
+         THEN Lat = Float( Result[IndLat]*ScaleLat  )   $
          ELSE Lat = Float( Result[IndLat] )
 
          ; Longitude
          ; Time 0.00001 according to the data, lei, 08/08/2013
-         IF( Result[IndLon] ne -9999999 )             $
-         THEN Lon = Float( Result[IndLon]*0.00001 )   $
+         ; Use values read from header (jaf, 8/9/13)
+	 IF( Result[IndLon] ne MissingLon )             $
+         THEN Lon = Float( Result[IndLon]*ScaleLon  )   $
          ELSE Lon = Float( Result[IndLon] )
 
          ; Static pressure
-         ; Time 0.01 according to the data, lei, 08/08/2013
-         IF( Result[IndPrs] ne -9999 )             $
-         THEN Prs = Float( Result[IndPrs]*0.01 )   $
+         ; Use values read from header (jaf, 8/9/13)
+	 IF( Result[IndPrs] ne MissingPrs )             $
+         THEN Prs = Float( Result[IndPrs]*ScalePrs  )   $
          ELSE Prs = Float( Result[IndPrs] )
 
          ; Get Julian Date at this time
@@ -410,12 +455,13 @@ Next_File:
             ; Get index of points for each minute of this hour
             ; NOTE: We need to check for missing values BEFORE 
             ; we do the 1-minute averaging (dbm, 05/16/05)
+            ; Use data missing values from header (jaf, 8/9/13)
             Ind = Where( DayArr1  eq ThisDay AND    $
                          HourArr1 eq H       AND    $
 			 MinArr1  eq M       AND    $
-                         LongArr1 gt -999.0  AND    $
-                         LatiArr1 gt -999.0  AND    $
-                         PresArr1 gt -999.0, N_Pts )
+                         LongArr1 gt MissingLon[0] AND    $
+                         LatiArr1 gt MissingLat[0] AND    $
+                         PresArr1 gt MissingPrs[0], N_Pts )
 
             ; Cycle if not found
             if ( N_Pts eq 0 ) then goto, next
