@@ -35,7 +35,7 @@ directories for seac4rs_model_merge.pro
 
 Several other things:
 
-1. Before running the scripts, firstly you need to define the SEAC4RS dir ($SEAC4RS) at your idl_startup.pro.
+1. Before running the scripts, firstly you need to define the SEAC4RS dir (!SEAC4RS) at your idl_startup.pro.
 
 2.Also you need to update IDL/gamap2/gamap_util/ctm_read_planeflight.pro as below:
 

@@ -1,6 +1,4 @@
-Pro batch_planelog2flightmerge, Platform,     FlightDates,  $
-; Changed by lei, not use TwoDay keyword. 07/23/2013
-;PRO batch_planelog2flightmerge, Platform,     FlightDates,  TwoDay, $
+PRO batch_planelog2flightmerge, Platform,     FlightDates,  TwoDay, $
                                 TakeoffTimes, LandingTimes,         $
                                 FileInFormat, FileOutFormat,        $
                                 sourceDir,    destDir,      avgTime,$
@@ -18,16 +16,16 @@ Pro batch_planelog2flightmerge, Platform,     FlightDates,  $
        inFiles = replace_token( FileInFormat, 'YYYYMMDD', $
                                 string(FlightDates[F]), $
                                 delim='')
-       ; Not use DayTwo keyword, changed by lei, 07/23/2013
+
        ; Check if this is a two-day flight 
-       ;If total( FlightDates[F] eq TwoDay ) then begin
+       If total( FlightDates[F] eq TwoDay ) then begin
            
            ; This is two-day, so add a second file
-       ;    inFiles = [ inFiles, $
-       ;                replace_token( FileInFormat, 'YYYYMMDD',   $
-       ;                               string(FlightDates[F]+1), $
-       ;                               delim=''                      ) ]
-       ;Endif
+           inFiles = [ inFiles, $
+                       replace_token( FileInFormat, 'YYYYMMDD',   $
+                                      string(FlightDates[F]+1), $
+                                      delim=''                      ) ]
+       Endif
 
        ; Name of output file
        outFile = replace_token( FileOutFormat, 'TIME', $
