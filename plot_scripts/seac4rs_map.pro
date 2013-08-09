@@ -49,27 +49,31 @@
 ; with subject "IDL routine seac4rs_map"
 ;-----------------------------------------------------------------------
 
-
-pro seac4rs_map, lon, lat, data, latmin=latmin, mindata=mindata, $
+pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
 	maxdata=maxdata, diff=diff, _extra=_extra
 
-  if n_elements(latmin) eq 0 then latmin = 15
+  if (n_elements(region) eq 0) then region=''
+
+  case strlowcase(region) of
+     'west'     : limit=[30,-125,50,-110]
+     'w'        : limit=[30,-125,50,-110]
+     'southeast': limit=[25,-100,40,-75]
+     'se'       : limit=[25,-100,40,-75]
+     'northeast': limit=[35,-95,50,-65]
+     'ne'       : limit=[35,-95,50,-65]
+     else:      limit=[25,-125,50,-65]
+  endcase
 
   myct,/WhGrYlRd
 
-  ; Set up the map region. Suppress lat labels to avoid obscuring the title.
-  ;tvmap,fltarr(2,2),/orthographic,/isotropic,/USA,$
-  tvmap,fltarr(2,2),/isotropic,/USA,limit=[latmin,-130,60,-60],/nodata,$
-        /continents,/grid,/noadvance,/nogylabels, _extra=_extra
+  ; Set up the map region.
+  tvmap,fltarr(2,2),/isotropic,/USA,limit=limit,/nodata,$
+        /continents,/noadvance, _extra=_extra
  
   if keyword_set(diff) then myct,/diff,ncolors=30 else myct,33,ncolors=30
 
-  ; Truncate data at latmin to avoid plotting outside the map window.
-  ; The default works well for the DC8 and NASA ER2 during SEAC4RS 
-  IND = where(lat ge latmin)
-
   ; Plot the data, coloring the points by value
-  scatterplot_datacolor,lon[IND],lat[IND],data[IND],/overplot,zmin=mindata,$
+  scatterplot_datacolor,lon,lat,data,/overplot,zmin=mindata,$
         zmax=maxdata,/xstyle,/ystyle,_extra=_extra,$
-        CBposition=[0.2,0.1,0.8,0.13]
+        CBposition=[0.2,-0.1,0.8,-0.07]
 end
