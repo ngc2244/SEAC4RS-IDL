@@ -227,8 +227,8 @@ pro Make_PlaneFlight, Date, HdrFile=HdrFile, UpLoad=UpLoad, _EXTRA=e
 
    ; NAV files w/ ER2 data
    ; Maybe we need change file name in the furture, lei, 07/29/13
-   ER2_Pos =  [ './ER2/nav_er2_' + YYYYMMDD_1 + '_ra.ict', $
-                './ER2/nav_er2_' + YYYYMMDD   + '_ra.ict' ]
+   ER2_Pos =  [ './ER2/SEAC4RS-MMS-1HZ_ER2_' + YYYYMMDD_1 + '_RA.ict', $
+                './ER2/SEAC4RS-MMS-1HZ_ER2_' + YYYYMMDD   + '_RA.ict' ]
 
    ; Logical flag is TRUE if ER2 data exists
    Is_ER2  = ( File_Exist( ER2_Pos[0] ) OR File_Exist( ER2_Pos[1] ) )

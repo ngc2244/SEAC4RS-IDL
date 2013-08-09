@@ -314,7 +314,7 @@ pro Get_ER2, FileNames,  $
 
             ; Split the line into sepa
             Result  = ER2_LineSplit( Line )
-            print, Result                
+
             ; Find the columns for TIME, LAT, LON, and STATIC PRESSURE
 	    ; Minor changes for SEAC4RS ER2 data, lei, 08/08/2013
             IndTime = Where( Result eq 'TIME_UTC' )
