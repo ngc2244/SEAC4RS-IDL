@@ -260,7 +260,7 @@ function read_file_model, file, field, ppt=ppt
     s = 'Data = ' + 'gc.' + field 
     status = Execute( s )  
 
-  ;endelse
+  endelse
 
   ; When requested data don't exist, give the user a message and return 0
   if ( status eq 0 ) then begin
