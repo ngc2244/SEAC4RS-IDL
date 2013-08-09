@@ -77,9 +77,10 @@
 ;                          - Few minor updates for ARCTAS flights
 ;                          - Don't print out points where Pressure = 0
 ;	 lei, 02 Jul 2013: Add WP-3D
+;        lei, 08 Aug 2013: Add ER-2
 ;                          
 ;-
-; Copyright (C) 2004-2008,
+; Copyright (C) 2004-2013,
 ; Bob Yantosca and Philippe Le Sager, Harvard University
 ; This software is provided as is without any warranty whatsoever. 
 ; It may be freely used, copied or distributed for non-commercial 
@@ -121,6 +122,7 @@ pro Make_PlaneFlight, Date, HdrFile=HdrFile, UpLoad=UpLoad, _EXTRA=e
    ; Initialize variables
    Line        = ''
    Is_DC8      = 0L
+   Is_ER2      = 0L
    Is_C130     = 0L
    Is_P3B      = 0L
    Is_FCN      = 0L
