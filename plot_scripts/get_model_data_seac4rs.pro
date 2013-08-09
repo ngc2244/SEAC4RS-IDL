@@ -397,7 +397,7 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
 
       if avgtime eq '10m' then $
       NewFiles = $
-        MFindFile(Model_dir+'*15m*er2*'+FlightDates[i]+'*.sav') else $
+        MFindFile(Model_dir+'*10m*er2*'+FlightDates[i]+'*.sav') else $
       if avgtime eq '60m' then $
       NewFiles = $
         MFindFile(Model_dir+'*60m*er2*'+FlightDates[i]+'*.sav') else $
