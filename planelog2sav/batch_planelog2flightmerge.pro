@@ -42,7 +42,7 @@ PRO batch_planelog2flightmerge, Platform,     FlightDates,  TwoDay, $
 
        ; Add the output directory
        outFile = destDir + outFile
-       print, outFile
+       
        ; Make the single-flight merge files
        planelog2flightmerge, Platform, inFiles, outFile=outFile, $
          flightDate  = FlightDates[F],       $
