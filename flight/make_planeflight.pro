@@ -192,8 +192,8 @@ pro Make_PlaneFlight, Date, HdrFile=HdrFile, UpLoad=UpLoad, _EXTRA=e
    ; Maybe we need change file name in the furture, lei, 07/29/13
    ;DC8_Pos =  [ './DC8/nav_dc8_' + YYYYMMDD_1 + '_ra.ict', $
    ;             './DC8/nav_dc8_' + YYYYMMDD   + '_ra.ict' ]
-   DC8_Pos =  [ './DC8/seac4rs-dc8hskping_DC8_' + YYYYMMDD_1 + '_RA.ict', $
-                './DC8/seac4rs-dc8hskping_DC8_' + YYYYMMDD   + '_RA.ict' ]
+   DC8_Pos =  [ './DC8/seac4rs-dc8hskping_dc8_' + YYYYMMDD_1 + '_ra.ict', $
+                './DC8/seac4rs-dc8hskping_dc8_' + YYYYMMDD   + '_ra.ict' ]
 
    ; Logical flag is TRUE if DC8 data exists
    Is_DC8  = ( File_Exist( DC8_Pos[0] ) OR File_Exist( DC8_Pos[1] ) )
