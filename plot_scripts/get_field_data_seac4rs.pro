@@ -104,11 +104,13 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
     'lat'    : field = 'Latitude'
     'lon'    : field = 'Longitude'
     'alt'    : field = 'GPS_Altitude'
-    'altp'   : field = 'Pressure_Altitude'
     'no'     : field = 'NO_CL'
     'no2'    : field = 'NO2_CL'
     'noy'    : field = 'NOy_CL'
-    'o3'     : field = 'O3_CL'
+    'o3'     : begin
+                if (platform eq 'dc8') then field = 'O3_CL'
+                if (platform eq 'er2') then field = 'O3_UAS'
+               end
     'hcho'   : field = 'CH2O_LIF'
     'bc'     : field = 'BC_mass_90_550_nm_HDSP2'
   else:
