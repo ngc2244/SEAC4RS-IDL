@@ -75,7 +75,7 @@
 ;-----------------------------------------------------------------------
 
 
-pro plot_2var_ts, Var1, Platform1, FlightDates, $
+pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
          Var2, Platform2, Model=Model, _Extra=_Extra
  
   ; Default to use altitude as the second variable 

@@ -1,6 +1,6 @@
 pro ts_date, Species, Platform, Flightdates=Flightdates,_extra=_extra
 
-  plot_2var_ts,Species,Platform,Flightdates,$
+  plot_2var_ts,Species,Platform,flightdates=Flightdates,$
   	title=strupcase(Platform)+' '+Flightdates, $
   	thick=2, _extra=_extra
 
