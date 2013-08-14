@@ -56,8 +56,9 @@
 ;-----------------------------------------------------------------------
 
 pro seac4rs_obs_mod_profiles,species_in,platform,flightdates=flightdates,$
-	mindata=mindata,maxdata=maxdata,unit=unit,choose_win=choose_win,$
-	latrange=latrange,lonrange=lonrange,save=save,_extra=_extra
+	mindata=mindata,maxdata=maxdata,unit=unit,choose_win=choose_win, $
+	latrange=latrange,lonrange=lonrange,altrange=altrange,save=save, $
+	_extra=_extra
  
 ; Set defaults
 if n_elements(species_in) eq 0 then species_in='CO'
@@ -70,6 +71,7 @@ if N_Elements(flightdates) eq 0 then begin
 	flightdates = flightdates(uniq(flightdates))
 	flightdates = string(flightdates, '(i8.8)')
 endif
+if n_elements(altrange) eq 0 then altrange=[0,20]
  
 ; Initialize arrays
 species=[0]
@@ -94,8 +96,13 @@ for i = 0, n_elements(flightdates)-1 do begin
    ; Read data, other relevant variables
    species = [species, species_tmp]
  
-   altp = [altp,get_field_data_seac4rs('altp',platform,flightdates[i], $
-                                    _extra = _extra )]
+   ; Allow use of alt if altp undefined
+   alt_tmp = get_field_data_seac4rs('altp',platform,flightdates[i], $
+                                    _extra = _extra )
+   if ~finite(mean_nan(alt_tmp),/nan) then altp = [altp,alt_tmp] $
+   else altp =  [altp,get_field_data_seac4rs('alt',platform,flightdates[i], $
+                                    _extra = _extra)]
+   
    lat =  [lat,get_field_data_seac4rs('lat',platform,flightdates[i], $
                                     _extra = _extra)]
    lon =  [lon,get_field_data_seac4rs('lon',platform,flightdates[i], $
@@ -130,23 +137,31 @@ species_mod = interpol( species_mod, doy_mod, doy )
 if ( n_elements(lonrange) gt 0 and n_elements(latrange) gt 0 ) then begin
    index = where( finite(species)                                 and $
 		  (lat ge min(latrange) and lat le max(latrange)) and $
+		  (altp ge min(altrange) and altp le max(altrange)) and $
 		  (lon ge min(lonrange) and lon le max(lonrange))     )
 endif else if ( n_elements(lonrange) gt 0 ) then begin
    index = where( finite(species)                                 and $
+		  (altp ge min(altrange) and altp le max(altrange)) and $
 		  (lon ge min(lonrange) and lon le max(lonrange))     )
 endif else if ( n_elements(latrange) gt 0 ) then begin
    index = where( finite(species)                                 and $
+		  (altp ge min(altrange) and altp le max(altrange)) and $
 		  (lat ge min(latrange) and lat le max(latrange))     )
-endif else index = where(finite(species))
+endif else index = where(finite(species) and $
+		  (altp ge min(altrange) and altp le max(altrange)) )
  
+; Return if no valid data in range
+if (index[0] lt 0) then begin
+   Print,'No valid data for this species / alt / lat / lon combo'
+   Return
+endif
+
+; Subset data
 species = species[index]
 species_mod = species_mod[index]
 altp = altp[index]
 lat = lat[index]
 lon = lon[index]
- 
-; Convert altitude from m to km
-altp = altp/1d3
  
 ; From CDH:
 ; Add this later? (jaf, 8/8/13)
@@ -190,7 +205,7 @@ if Keyword_set(save) then begin
 endif else if n_elements(choose_win) eq 0 then window,0 else window,choose_win
 
 ; Plot individual data points
-plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,10],ystyle=9,$
+plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,ceil(altrange[1])],ystyle=9,$
 	xtitle=xtitle,ytitle=ytitle,title=title,xstyle=9
 oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
 
