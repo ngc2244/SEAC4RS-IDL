@@ -76,20 +76,25 @@
 
 
 pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
-         Var2, Platform2, Model=Model, _Extra=_Extra
+         Var2, Platform2, Model=Model, maxdata1=maxdata1,   $
+	 mindata1=mindata1, maxdata2=maxdata2, mindata2=mindata2,$
+	 _Extra=_Extra
  
   ; Default to use altitude as the second variable 
   If not Keyword_Set( Var2 ) and                   $
      not Keyword_set( Model ) then Var2 = 'ALTP'
   If not Keyword_Set( Var2 ) and                   $
          Keyword_set( Model ) then Var2 = 'ALT'
-    
+
   ; Default to plot all flights
   If not Keyword_Set( FlightDates ) then FlightDates = '*'
 
   ; Default to use the same platform for both time series
   If not Keyword_Set( Platform2    ) then Platform2    = Platform1 
  
+  ; Kludge for ER2 with no ALTP data for now
+  if ( Var2 eq 'ALTP' and Platform2 eq 'ER2' ) then Var2='ALT'
+    
   ; Default to read aircraft observations
   If Keyword_Set( Model ) then GetData = 'get_model_data_seac4rs' $
     else GetData = 'get_field_data_seac4rs'
@@ -103,21 +108,30 @@ pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
   Time2 = Call_Function( GetData, 'DOY', Platform2, FlightDates, _extra=_extra )
  
   ; Set up the plot without plotting any data
+  if ( n_elements(maxdata1) eq 0 ) then maxdata1=max(Data1,/nan)
+  if ( n_elements(maxdata2) eq 0 ) then maxdata2=max(Data2,/nan)
+  if ( n_elements(mindata1) eq 0 ) then mindata1=min(Data1,/nan)
+  if ( n_elements(mindata2) eq 0 ) then mindata2=min(Data2,/nan)
+
+  ; Change alt axis upper limt
+  ;maxdata2 = 10*floor(maxdata2/10)+70
+  
   plot, Time1, Data1, ystyle=4, xstyle=9, xtitle='Day of year', /noData, $
     xrange=[min(Time1, max=mx, /NaN), mx], _Extra=_Extra
  
   ; Right y-axis
-  axis, /yaxis, yrange=[min(Data2, max=mx, /NaN), mx], /save, ytitle=Var2, $
+  axis, /yaxis, yrange=[mindata2, maxdata2], /save, ytitle=Var2, $
     _Extra=_Extra
  
   ; Data for right y-axis
   oplot, Time2, Data2, _Extra=_Extra 
   
   ; Left y-axis
-  axis, yaxis=0, yrange=[min(Data1, max=mx,/NaN), 10*floor(mx/10)+70], /save, $
+  axis, yaxis=0, yrange=[mindata1, maxdata1], /save, $
     ytitle=Var1, color=4, _Extra=_Extra,/ystyle
 
   ; Data for left y-axis
   oplot, Time1, Data1, color=4, _Extra=_Extra
+
  
 end
