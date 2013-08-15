@@ -92,9 +92,6 @@ pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
   ; Default to use the same platform for both time series
   If not Keyword_Set( Platform2    ) then Platform2    = Platform1 
  
-  ; Kludge for ER2 with no ALTP data for now
-  if ( Var2 eq 'ALTP' and Platform2 eq 'ER2' ) then Var2='ALT'
-    
   ; Default to read aircraft observations
   If Keyword_Set( Model ) then GetData = 'get_model_data_seac4rs' $
     else GetData = 'get_field_data_seac4rs'

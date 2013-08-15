@@ -107,6 +107,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
                 if (platform eq 'dc8') then field = 'GPS_Altitude'
                 if (platform eq 'er2') then field = 'GPS_Alt'
                end
+               ; No ALTP data for ER2
+    'altp'   : if (platform eq 'er2') then field = 'GPS_Alt'
     'no'     : field = 'NO_CL'
     'no2'    : field = 'NO2_CL'
     'noy'    : field = 'NOy_CL'
@@ -137,23 +139,6 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
 
       ; Form the fractional DOY from the integer part and fractional part 
       Data = jday + utc / (24. * 3600.) 
- 
-  ; ER2 KLUDGE FOR NOW!!
-  endif else if ( field eq 'co' and platform eq 'er2' ) then begin
-
-     print, ''
-     print, ''
-     print,'WARNING! Using kludge for ER2! Fix when new merge available!'
-     print, ''
-     print, ''
-
-      Print, 'Reading fields for CO from file: '+file+' ...'
- 
-      s = 'co = ' + Platform + '.co' 
-      status = Execute( s )  
- 
-      ; Scale
-      Data = co * .01
  
   ; Special Case for SOx
   ; Comment out, lei
