@@ -118,7 +118,7 @@ endif else begin
                                      _extra=_extra)
 	lon = get_field_data_seac4rs('lon',platform,flightdates,$
                                      _extra=_extra)
-	alt_data = get_field_data_senex('alt',platform,flightdates,$
+	alt_data = get_field_data_seac4rs('alt',platform,flightdates,$
                                      _extra=_extra)
 endelse
 
