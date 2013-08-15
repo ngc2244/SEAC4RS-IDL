@@ -313,11 +313,11 @@ pro read_dc8_merge, FileNames
             ;; Leave this out to allow folks to treat ULOD, LLOD as they wish
             ;; ------------------
             ;; Replace < LOD values with 0
-         Ind  = Where( ThisData eq -888888888, Ct )
+         Ind  = Where( ThisData eq -888888, Ct )
          If (Ct gt 0) then ThisData[Ind] = 0.0D0
 
          ;; Check for ULOD flags
-         Ind  = Where( ThisData eq -777777777, Ct )
+         Ind  = Where( ThisData eq -777777, Ct )
 ;         If (Ct gt 0) Then Stop, 'ULOD Flags Found!!'
          If (Ct gt 0) Then Begin
             ThisData[Ind] = !Values.F_NAN
@@ -325,7 +325,7 @@ pro read_dc8_merge, FileNames
          EndIf
 
             ;; Replace missing values with NA
-         Ind  = Where( ThisData eq -999999999, Ct )
+         Ind  = Where( ThisData eq -999999, Ct )
          If (Ct gt 0) then ThisData[Ind] = !VALUES.F_NAN
             ;; ------------------
 
