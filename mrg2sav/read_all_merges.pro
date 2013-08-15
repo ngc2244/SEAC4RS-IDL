@@ -7,7 +7,7 @@ pro read_all_merges, Platform, Dir=Dir
       Stop, 'Must pass platform (''DC8'' or ''ER2'' )'
    
    Case Platform Of
-      'DC8'  : FileString = '*mrg60-DC8*ict'
+      'DC8'  : FileString = '*mrg60-dc8*ict'
       'ER2'  : FileString = '*mrg60-ER2*ict'
    Endcase
 

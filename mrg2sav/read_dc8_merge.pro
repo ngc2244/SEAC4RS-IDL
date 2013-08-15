@@ -6,8 +6,12 @@ function DC8_LineSplit, Line
 ; (bmy, 5/16/05)
 ;====================================================================
 
-   ; First try to break the line by spaces ...
-   Result = StrBreak( Line, ' ' )
+   ; First try to break the line by comma+spaces ...
+   Result = StrBreak( Line, ', ' )
+
+   ; ... then if that doesn't work, by spaces
+   if ( N_Elements( Result ) eq 1 ) $
+      then Result = StrBreak( Line, ' ' )
 
    ; ... then if that doesn't work, by tabs
    if ( N_Elements( Result ) eq 1 ) $
@@ -38,6 +42,9 @@ pro read_dc8_merge, FileNames
 
    if ( N_Params() EQ 0 ) Then $
       FileNames = [ '~/data/INTEXB/mrg_Hg/mrgUNHMERC_dc8_20060319_R3']
+
+   ; For duplicate name (jaf, 8/15/13)
+   LARGE1=1
 
    ;; =============================
    ;; Read in datafile
@@ -195,15 +202,17 @@ pro read_dc8_merge, FileNames
             If ( Name EQ 'J[HO2NO2->OH+NO3]') Then Name = 'JHO2NO2_OH_NO3'
             If ( Name EQ 'J[CH3CH2ONO2->Products]'       ) Then $
                Name = 'JCH3CH2ONO2'
-            If ( Name EQ 'J[BrONO2+hv->Br+NO3]'     ) Then Name = 'JBrONO2'
-            If ( Name EQ 'J[BrONO2+hv->BrO+NO2]'    ) Then Name = 'JBrONO2_BrO'
-            If ( Name EQ 'J[ClONO2+hv->Cl+NO3]'     ) Then Name = 'JClONO2'
-            If ( Name EQ 'J[ClONO2+hv->ClO+NO2]'    ) Then Name = 'JClONO2_ClO'
+            ;; JAF MODIFIED 8/15/13
+            If ( Name EQ 'J[BrONO2->Br+NO3]'     ) Then Name = 'JBrONO2'
+            If ( Name EQ 'J[BrONO2->BrO+NO2]'    ) Then Name = 'JBrONO2_BrO'
+            If ( Name EQ 'J[BrO->Br+O]'         ) Then Name = 'JBrO'
+            If ( Name EQ 'J[Cl2->Cl+Cl]'        ) Then Name = 'JCl2'
+            ;; end JAF
+            If ( Name EQ 'J[ClONO2->Cl+NO3]'     ) Then Name = 'JClONO2'
+            If ( Name EQ 'J[ClONO2->ClO+NO2]'    ) Then Name = 'JClONO2_ClO'
             If ( Name EQ 'J[BrCl->Br+Cl]'       ) Then Name = 'JBrCl'
             If ( Name EQ 'J[HOBr->HO+Br]'       ) Then Name = 'JHOBr'
-            If ( Name EQ 'J[BrO+hv->Br+O]'         ) Then Name = 'JBrO'
             If ( Name EQ 'J[Br2->Br+Br]'        ) Then Name = 'JBr2'
-            If ( Name EQ 'J[Cl2+hv->Cl+Cl]'        ) Then Name = 'JCl2'
             If ( Name EQ 'J[Br2O->products]'    ) Then Name = 'JBr2O'
             If ( Name EQ 'Na-'                  ) Then Name = 'Na'
 
@@ -277,6 +286,13 @@ pro read_dc8_merge, FileNames
 	    If (Name EQ '2-Ethyltoluene' ) THEN Name = 'Two_Ethyltoluene'
 	    If (Name EQ '1_2_3-Trimethylbenzene' ) THEN Name = $
 		'One_Two_Three_Trimethylbenzene'
+            ;; JAF Added conversions for the following names 8/15/20013
+            If ( Name EQ 'J[Br2O->Products]'    ) Then Name = 'JBr2O'
+            If ( Name EQ 'stdPT-to-AMB_Conversion_LARGE' and $
+		 LARGE1 EQ 1 ) THEN BEGIN
+                Name = 'stdPT-to-AMB_Conversion_LARGE_2'
+		LARGE1 = 0
+            EndIf
             ;; End JAF Changes
 
             Name = StrRepl(Name, '/', '_')
