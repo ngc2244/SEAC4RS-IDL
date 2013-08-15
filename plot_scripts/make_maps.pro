@@ -95,8 +95,8 @@ CASE species of
     end
     'SO4' : begin
 	MinData = 0
-	MaxData = 20
-	Unit = 'nmol/m3'
+	MaxData = 1
+	Unit = 'ug/m3'
     end
     'SO2' : begin
 	MinData = 0
@@ -115,8 +115,8 @@ CASE species of
     end
     'ISOP' : begin
 	MinData = 0
-	MaxData = 6
-	Unit = 'ppbC'
+	MaxData = 300 
+	Unit = 'ppb'
     end
     'Pressure' : begin
 	MinData = 0

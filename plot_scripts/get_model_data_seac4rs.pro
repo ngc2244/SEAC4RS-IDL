@@ -113,24 +113,26 @@ function read_file_model, file, field, ppt=ppt
   ; used in the aircraft data
   ;------
   field = strlowcase( field )
-  ; Case for SENEX and SEAC4RS
-  ; Stay tuned for real data, lei
+
+  ; special cases
+  if ( field eq 'hcho' ) then field = 'ch2o'
+ 
   Case field of
     'co'     :  conv_factor = 1e9    ; v/v -> ppbv
-    'ch2o'   :  conv_factor = 1e9    ; v/v -> ppbv
+    'ch2o'   :  conv_factor = 1e9   ; v/v -> pptv
     'hno3'   :  conv_factor = 1e9    ; v/v -> ppbv
     'hcooh'  :  conv_factor = 1e9    ; v/v -> ppbv
     'no'     :  conv_factor = 1e9    ; v/v -> ppbv
     'no2'    :  conv_factor = 1e9    ; v/v -> ppbv
     'noy'    :  conv_factor = 1e9    ; v/v -> ppbv
     'o3'     :  conv_factor = 1e9    ; v/v -> ppbv
-    'so2'    :  conv_factor = 1e9    ; v/v -> ppbv
+    'so2'    :  conv_factor = 1e12   ; v/v -> pptv
     'noy'    :  conv_factor = 1e9    ; v/v -> ppbv
     'pan'    :  conv_factor = 1e9    ; v/v -> ppbv
     'ppn'    :  conv_factor = 1e9    ; v/v -> ppbv
     'ald2'   :  conv_factor = 1e12/2 ; v/v c -> pptv
     'acet'   :  conv_factor = 1e12/3 ; v/v c -> pptv
-    'isop'   :  conv_factor = 1e12/5 ; v/v c -> ppbv
+    'isop'   :  conv_factor = 1e9/5  ; v/v c -> ppbv
     'mek'    :  conv_factor = 1e12/4 ; v/v c -> pptv
     'so4'    :  conv_factor = 1e12 ; mole/mole -> pptv
     'so4s'   :  conv_factor = 1e12 ; mole/mole -> pptv
@@ -151,7 +153,7 @@ function read_file_model, file, field, ppt=ppt
     'pcobcn' :  conv_factor = 1e9    ; v/v -> ppbv
     'pcobw'  :  conv_factor = 1e9    ; v/v -> ppbv
     'pcobrw' :  conv_factor = 1e9    ; v/v -> ppbv
-    'pisop'  :  conv_factor = 1e12/5 ; v/v c -> ppbv
+    'pisop'  :  conv_factor = 1e9/5 ; v/v c -> ppbv
     else     :  conv_factor = 1
   endcase
 
@@ -163,7 +165,7 @@ function read_file_model, file, field, ppt=ppt
  ;if ( field eq 'fa_sox' ) then field = 'sox' 
  ;
  ;; to use SAGA coarse SO4 and NH4
- ;if ( field eq 'saga_so4' ) then field = 'so4' 
+ if ( field eq 'saga_so4' ) then field = 'so4' 
  ;if ( field eq 'saga_nh4' ) then field = 'nh4' 
  ;if ( field eq 'saga_no3' ) then field = 'nit' 
  
@@ -172,7 +174,6 @@ function read_file_model, file, field, ppt=ppt
     ; first get nmol/m3 (independent of species)
     conv_factor = conv_factor * (1.29 / 28.97)
     ; next use appropriate molar mass for conversion to ug/m3
-    ; use nmole/m3 instead of ug/m3
     case field of
          'so4'  : conv_factor = conv_factor * 96d-3
          'so4s' : conv_factor = conv_factor * 96d-3

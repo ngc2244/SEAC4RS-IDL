@@ -82,8 +82,9 @@ CASE species of
     end
     'SO4' : begin
 	MinData = 0
-	MaxData = 20
-	Unit = 'nmol/m3'
+	MaxData = 1
+        fscale = 96.*( 1.29 / 28.97 )
+	Unit = 'ug/m3'
     end
     'SO2' : begin
 	MinData = 0
@@ -92,9 +93,9 @@ CASE species of
     end
     'ISOP' : begin
 	MinData = 0
-	MaxData = 4d3
-	Unit = 'ppt'
-        fscale = 1d3/5
+	MaxData = 1 
+	Unit = 'ppb'
+        fscale = 1./5
     end
     else:
 ENDCASE

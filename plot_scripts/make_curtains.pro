@@ -86,20 +86,36 @@ pro make_curtains, species, platform, flightdates = flightdates, $
      end
      'SO4': begin
          MinData = 0
-         MaxData = 600
-	 fscale = 1e3
-         Unit = 'pptv'
+         MaxData = 1
+	 fscale = 96.*( 1.29 / 28.97 )
+         Unit = 'ug/m3'
          DiagN = 'IJ-AVG-$'
          Tracer = 27
       end
      'SO2': begin
          MinData = 0
-         MaxData = 1
-	 fscale = 1
-         Unit = 'ppbv'
+         MaxData = 1d3
+	 fscale = 1d3
+         Unit = 'pptv'
          DiagN = 'IJ-AVG-$'
          Tracer = 26
       end
+      'ISOP' : begin
+         MinData = 0
+         MaxData = 1.5
+	 fscale = 1./5
+         Unit = 'ppbv'
+         DiagN = 'IJ-AVG-$'
+         Tracer = 6
+       end
+      'HCHO' : begin
+         MinData = 0
+         MaxData = 3d3
+	 fscale = 1d3
+         Unit = 'pptv'
+         DiagN = 'IJ-AVG-$'
+         Tracer = 20 
+       end
       else:
    endcase
  

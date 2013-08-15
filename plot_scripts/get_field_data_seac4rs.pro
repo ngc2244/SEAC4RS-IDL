@@ -103,21 +103,23 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   Case field of
     'lat'    : field = 'Latitude'
     'lon'    : field = 'Longitude'
-    'alt'    : begin
-                if (platform eq 'dc8') then field = 'GPS_Altitude'
-                if (platform eq 'er2') then field = 'GPS_Alt'
-               end
+    'alt'    : field = 'GPS_Alt'
                ; No ALTP data for ER2
     'altp'   : if (platform eq 'er2') then field = 'GPS_Alt'
     'no'     : field = 'NO_CL'
     'no2'    : field = 'NO2_CL'
     'noy'    : field = 'NOy_CL'
     'o3'     : begin
-                if (platform eq 'dc8') then field = 'O3_CL'
+                if (platform eq 'dc8') then field = 'O3_ESRL'
                 if (platform eq 'er2') then field = 'O3_UAS'
                end
     'hcho'   : field = 'CH2O_LIF'
+    'ch2o'   : field = 'CH2O_LIF'
+    'so2'    : field = 'SO2_GTCIMS'
+    'isop'   : field = 'isoprene'
     'bc'     : field = 'BC_mass_90_550_nm_HDSP2'
+               ; only saga for now
+    'so4'    : field = 'saga_so4'
   else:
   endcase
 
@@ -193,16 +195,15 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   ;    data = ( 1.29 / 28.97 ) * fine_aerosol_sulfate $
   ;    else data = fine_aerosol_sulfate
   ;
-  ; Special Case for coarse SAGA sulfate 
-  ; Comment out, lei
-  ;endif else If field eq 'saga_so4' then begin
-  ;
-  ;    Print, 'Reading fields for SO4 from file: '+file+' ...'
-  ;
-  ;    ; Read the time UTC
-  ;    s = 'so4 = ' + Platform + '.SO4'
-  ;    status = Execute( s )  
-  ;
+  ; Special Case for SAGA sulfate < 1um
+  endif else If field eq 'saga_so4' then begin
+  
+      Print, 'Reading fields for SO4 from file: '+file+' ...'
+  
+      ; Read the time UTC
+      s = 'so4 = ' + Platform + '.sulfate_lt1um_SAGA'
+      status = Execute( s )  
+  
   ;    if (keyword_set(nss)) then begin
   ;       s = 'sodium = ' + Platform + '.Na'
   ;       status = Execute( s )
@@ -213,11 +214,10 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   ;                  (23./96.) * 0.252 * sodium
   ;    endif
   ;
-  ;    ; Convert units from ppt to nmole/m3
-  ;    if ~( keyword_set(ppt) ) then $
-  ;    ;data = 96d-3 * ( 1.29 / 28.97 ) * so4 $
-  ;    data = ( 1.29 / 28.97 ) * so4 $
-  ;    else data = so4
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
+      else data = so4
 
   ; Special Case for coarse SAGA ammonium 
   ; Comment out, lei

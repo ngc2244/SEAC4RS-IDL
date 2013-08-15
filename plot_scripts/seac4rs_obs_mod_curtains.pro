@@ -113,7 +113,7 @@ if (~keyword_set(obs_only)) then Obs_Only=0
 species = $
   get_field_data_seac4rs(species_in, platform, flightdates, /minavg, $
                         _extra = _extra)
-altp = get_field_data_seac4rs('alt', platform, flightdates, /minavg, $
+altp = get_field_data_seac4rs('altp', platform, flightdates, /minavg, $
                              _extra = _extra)
 lat =  get_field_data_seac4rs('lat', platform, flightdates, /minavg, $
                              _extra = _extra)
@@ -123,11 +123,6 @@ time = get_field_data_seac4rs('utc', platform, flightdates, /minavg, $
                              _extra = _extra)
 doy =  get_field_data_seac4rs('doy', platform, flightdates, /minavg, $
                              _extra = _extra)
-
-;;;; CHECK SEAC4RS alt!
-; altitude is in meters, convert to km
-; if alt in kim, remove this line
-altp = altp*1d-3
 
 ; Get model output for given species 
 if (~keyword_set(obs_only)) then $
@@ -270,11 +265,10 @@ ydim = temp(1)
 ; Get the longitudes included in the domain
 lon_mod = GridInfo.xmid(iFirst:xdim+iFirst-1)
 
-;;;;; CHECK THIS FOR SEAC4RS!!
-;; Convert longitudes from [-180,180] to [0, 360] for consistency
-;; with aircraft data
-;ind = where(lon_mod lt 0)
-;lon_mod(ind) = lon_mod(ind)+360
+; Convert longitudes from [-180,180] to [0, 360] for consistency
+; with aircraft data
+ind = where(lon_mod lt 0)
+lon_mod(ind) = lon_mod(ind)+360
 
 ; Get the latitudes included in the domain
 lat_mod = GridInfo.ymid(jFirst:ydim+jFirst-1)

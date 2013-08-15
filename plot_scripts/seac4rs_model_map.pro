@@ -16,7 +16,7 @@
 ;
 ; INPUTS:
 ;        Species  - Name of species being mapped. e.g. 'CO', 'O3', 'ALTP'
-;        Platform - Name of Aircraft. Current options: 'WP3D'
+;        Platform - Name of Aircraft. Current options: 'DC8'
 ;
 ; KEYWORD PARAMETERS:
 ;        FlightDates - Dates (as takeoff dates) as 'YYYYMMDD'. Can only
@@ -42,10 +42,10 @@
 ; NOTES:
 ;
 ; EXAMPLE:
-;    SEAC4RS_MODEL_MAP,'CO','WP3D',FlightDates='20130708', $
+;    SEAC4RS_MODEL_MAP,'CO','DC8',FlightDates='20130806', $
 ;                      MinData=0, MaxData=200,/OPlot_Data
 ;
-;    Plots modeled CO for 20130708, with observations on top.
+;    Plots modeled CO for 20130806, with observations on top.
 ;
 ; MODIFICATION HISTORY:
 ;        jaf, 9 Aug 2013: VERSION 1.00
@@ -64,8 +64,8 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 
    ; Set defaults
    if n_elements(species_in)  eq 0 then species_in='CO'
-   if n_elements(platform)    eq 0 then platform='WP3D'
-   if n_elements(flightdates) eq 0 then flightdates='20130708'
+   if n_elements(platform)    eq 0 then platform='DC8'
+   if n_elements(flightdates) eq 0 then flightdates='20130806'
    if (strpos(flightdates,'*') ge 0) or (n_elements(flightdates) gt 1) then begin
       print,'Must specify a single date!'
       return
@@ -108,7 +108,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    
    ; Pick tracer using names from tracerinfo.dat
    TracerN = indgen(80)+1 ; 80 tracers hardwired for SEAC4RS
-   tracerinfo_file = !SEAC4RS+'/IDL/planelog2sav/tracerinfo.dat'
+   tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
    ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
    TracerName = TracerStruct.name
    Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
@@ -129,6 +129,8 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 
    ; Subselect relevant altitudes
    ZInd = where(ZZ ge min(alts) and ZZ le max(alts))
+   if n_elements(zind) eq 1 then $
+   Species_Mod = Species_Mod[*,*,ZInd] else $
    Species_Mod = mean(Species_Mod[*,*,ZInd],3)
 
    ; Set plot parameters
@@ -153,10 +155,11 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 ;   endif else window,0
 
    ; Plot model as background
+   myct, 33, ncolors = 30
    tvmap, Species_Mod, XX[iFirst:iFirst+NX-1], YY[jFirst:jFirst+NY-1], $
           /isotropic, /USA, limit=limit, $
           /fcontour, /continents, /noadvance, title=title,       $
-  	  cbunit='[ppbv]',/cbar, c_levels=indgen(20)*dcolor+mindata, $
+  	  cbunit=unit,/cbar, c_levels=indgen(20)*dcolor+mindata, $
           cbformat=cbformat,_extra=_extra
 
    ; If needed, read and plot observations during flight
