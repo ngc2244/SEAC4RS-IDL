@@ -88,13 +88,19 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    ; NRT Directory
    dir = '/as/scratch/bmy/NRT/run.NA/bpch/'
 
+   ; Special treatment for SEAC4RS (jaf, 8/16/13)
+   ; Files with name YYYYMMDD mostly contain data for the next date
+   ; (21 UTC on YYYYMMDD to 21 UTC on YYYYMMDD+1). Here use previous 
+   ; file (day before flightdate) to get most approrpiate information.
+   fd_file = string(long(flightdates)-1L,'(i8)')
+
    ; Test for zipped/unzipped file
-   file = dir + 'ctm.bpch.'+flightdates
+   file = dir + 'ctm.bpch.'+fd_file
    Zipped = 0
 
    if (mfindfile(file))[0] eq '' then begin
       if (mfindfile(file+'.gz'))[0] eq '' then begin
-          print,'No file (zipped or unzipped) found for date '+flightdates+'!'
+          print,'File '+file+' not found (zipped or unzipped)!'
           return
       endif else begin
 
