@@ -118,6 +118,11 @@ CASE species of
 	MaxData = 1.5
 	Unit = 'ppb'
     end
+    'HCHO' or 'CH2O' : begin
+	MinData = 0
+	MaxData = 5d3
+	Unit = 'ppt'
+    end
     'Pressure' : begin
 	MinData = 0
 	MaxData = 1100

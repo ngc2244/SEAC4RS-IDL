@@ -119,7 +119,7 @@ function read_file_model, file, field, ppt=ppt
  
   Case field of
     'co'     :  conv_factor = 1e9    ; v/v -> ppbv
-    'ch2o'   :  conv_factor = 1e9   ; v/v -> pptv
+    'ch2o'   :  conv_factor = 1e12   ; v/v -> pptv
     'hno3'   :  conv_factor = 1e9    ; v/v -> ppbv
     'hcooh'  :  conv_factor = 1e9    ; v/v -> ppbv
     'no'     :  conv_factor = 1e9    ; v/v -> ppbv

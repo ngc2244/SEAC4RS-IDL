@@ -16,18 +16,12 @@ endif
 species = strupcase(species)
 
 CASE species of
-    'CO' : begin
-	Unit = 'ppbv'
-    end
-    'SO4' : begin
-	Unit = 'ppt'
-    end
-    'SO2' : begin
-	Unit = 'ppbv'
-    end
-    'O3' : begin
-	Unit = 'ppbv'
-    end
+    'CO'  : Unit = 'ppbv'
+    'SO4' : Unit = 'ug/m3'
+    'SO2' : Unit = 'ppbv'
+    'O3'  : Unit = 'ppbv'
+    'HCHO' or 'CH2O' : Unit = 'pptv'
+    'ISOP': Unit = 'ppbv'
     else:
 ENDCASE
 

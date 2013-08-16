@@ -108,7 +108,7 @@ pro make_curtains, species, platform, flightdates = flightdates, $
          DiagN = 'IJ-AVG-$'
          Tracer = 6
        end
-      'HCHO' : begin
+      'HCHO' or 'CH2O': begin
          MinData = 0
          MaxData = 3d3
 	 fscale = 1d3

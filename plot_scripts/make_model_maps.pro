@@ -97,6 +97,12 @@ CASE species of
 	Unit = 'ppb'
         fscale = 1./5
     end
+    'HCHO' or 'CH2O' : begin
+	MinData = 0
+	MaxData = 3d3 
+	Unit = 'ppt'
+        fscale = 1d3
+    end
     else:
 ENDCASE
 
