@@ -55,14 +55,14 @@ pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
   if (n_elements(region) eq 0) then region=''
 
   case strlowcase(region) of
-     'west'     : limit=[30,-125,50,-110]
-     'w'        : limit=[30,-125,50,-110]
+     'west'     : limit=[30,-127,50,-110]
+     'w'        : limit=[30,-127,50,-110]
      'southeast': limit=[25,-100,40,-75]
      'se'       : limit=[25,-100,40,-75]
      'northeast': limit=[35,-95,50,-65]
      'ne'       : limit=[35,-95,50,-65]
      'na'       : limit=[9,-130,60,-60]
-     else:      limit=[25,-125,50,-65]
+     else:      limit=[25,-127,50,-65]
   endcase
 
   myct,/WhGrYlRd
