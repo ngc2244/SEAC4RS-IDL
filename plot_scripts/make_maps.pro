@@ -115,7 +115,7 @@ CASE species of
     end
     'ISOP' : begin
 	MinData = 0
-	MaxData = 300 
+	MaxData = 1.5
 	Unit = 'ppb'
     end
     'Pressure' : begin

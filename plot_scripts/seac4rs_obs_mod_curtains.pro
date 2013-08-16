@@ -85,13 +85,14 @@
 ; We need Construct_Map_Labels, so compile Map_Labels
 @map_labels
 
-pro seac4rs_obs_mod_curtains, species_in, platform, diagn, tracer,          $
+pro seac4rs_obs_mod_curtains, species_in, platform, diagn, tracer,         $
                             flightdates = flightdates, fscale   = fscale,  $
                             mindata     = mindata,     maxdata  = maxdata, $
                             mmindata    = mmindata,    mmaxdata = mmaxdata,$
                             unit        = unit,        ztop     = ztop,    $
 			    oplot_data  = oplot_data,  aod      = aod,     $
-                            obs_only    = obs_only,    _extra   = _extra
+                            obs_only    = obs_only,    utcrange = utcrange,$
+			    _extra   = _extra
  
 ; Set default values if parameters / keywords aren't specified 
 if N_Elements(species_in) eq 0 then begin
@@ -124,28 +125,45 @@ time = get_field_data_seac4rs('utc', platform, flightdates, /minavg, $
 doy =  get_field_data_seac4rs('doy', platform, flightdates, /minavg, $
                              _extra = _extra)
 
+; Convert measured time (in seconds past midnight UTC) to hours
+time  = time/3600.
+
+; check if there is a user-specified UTC range
+if n_elements(utcrange) gt 0 then begin
+   utcind = where(time ge min(utcrange) and time le max(utcrange), count)
+   if (count gt 0) then begin
+
+   time=time[utcind]
+   altp=altp[utcind]
+   lat=lat[utcind]
+   lon=lon[utcind]
+   species=species[utcind]
+
+   endif else begin
+      print,'No data in this time range!'
+      return
+   endelse
+endif
+ 
 ; Get model output for given species 
 if (~keyword_set(obs_only)) then $
-species_mod = get_model_data_seac4rs(species_in, platform,flightdates, $
+   species_mod = get_model_data_seac4rs(species_in, platform,flightdates, $
               _extra=_extra)
+ 
 ; If no model output is available, set Obs_Only keyword and skip
 ; irrelevant commands
 if (N_Elements(species_mod) eq 1 ) then obs_only=1
 
 if (~keyword_set(obs_only)) then begin
-
-; Get other necessary model parameters, and interpolate model output 
-doy_mod = get_model_data_seac4rs('DOY', platform, flightdates,_extra=_extra)
-species_mod = interpol( species_mod, doy_mod, doy )
- 
+   ; Get other necessary model parameters, and interpolate model output 
+   doy_mod = get_model_data_seac4rs('DOY', platform, flightdates,_extra=_extra)
+   species_mod = interpol( species_mod, doy_mod, doy )
+   species_mod=species_mod[utcind]
 endif
 
 ; nPts is the number of observations
 nPts = n_elements(lat)
 
-; Convert measured time (in seconds past midnight UTC) to hours
-time  = time/3600.
- 
 ; Several flights span two days of UTC time. If there are
 ; observations after midnight, convert these to hour after UTC on
 ; the next day.
