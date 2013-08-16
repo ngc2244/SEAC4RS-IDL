@@ -232,7 +232,7 @@ multipanel,/off
 if Keyword_Set(save) then close_device
  
 ; Set up plot, limited range
-if ( n_elements(mindata) gt 0 and n_elements(maxdata) gt 0 ) then begin
+if ( n_elements(mindata) gt 0 or n_elements(maxdata) gt 0 ) then begin
   if Keyword_set(save) then begin
      filename=!SEAC4RS+'/IDL/plots/'+platform+'_'+species_in+'_profiles.ps'
      multipanel,rows=2,cols=1
@@ -240,6 +240,9 @@ if ( n_elements(mindata) gt 0 and n_elements(maxdata) gt 0 ) then begin
                   /color, /portrait
      !p.font = 0
 endif else if n_elements(choose_win) eq 0 then window,1 else window,choose_win
+
+if n_elements(mindata) eq 0 then mindata=min([species,species_mod])
+if n_elements(maxdata) eq 0 then maxdata=max([species,species_mod])
 
 ; Plot individual data points
 plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,10],ystyle=9,$
@@ -269,10 +272,6 @@ legend, lcolor=[1,2],line=[0,0],lthick=[2,2],$
 multipanel,/off
 if Keyword_Set(save) then close_device
  
-endif else if ( n_elements(mindata) gt 0 or n_elements(maxdata) gt 0  ) then begin
-   print, ''
-   print,'Specify MINDATA and MAXDATA simultaneously to plot reduced range'
-   print, ''
 endif
  
 end
