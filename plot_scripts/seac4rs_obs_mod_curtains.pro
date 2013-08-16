@@ -158,7 +158,7 @@ if (~keyword_set(obs_only)) then begin
    ; Get other necessary model parameters, and interpolate model output 
    doy_mod = get_model_data_seac4rs('DOY', platform, flightdates,_extra=_extra)
    species_mod = interpol( species_mod, doy_mod, doy )
-   species_mod=species_mod[utcind]
+   if (n_elements(utcrange) gt 0) then species_mod=species_mod[utcind]
 endif
 
 ; nPts is the number of observations
@@ -167,14 +167,35 @@ nPts = n_elements(lat)
 ; Several flights span two days of UTC time. If there are
 ; observations after midnight, convert these to hour after UTC on
 ; the next day.
-ind2 = where(time ge 24.)
-if ind2(0) gt 0 then begin
-   time(ind2) = time(ind2)-24.
-   ; nDay1 is the index of the last point on the first UTC day
-   nDay1 = ind2(0)-1
-   ; nDay2 is the index of the last point on the second UTC day
-   nDay2 = ind2(n_elements(ind2)-1)
-endif else nDay1 = nPts-1
+;ind2 = where(time ge 24.)
+;if ind2[0] gt 0 then begin
+;   time[ind2] = time[ind2]-24.
+;   ; nDay1 is the index of the last point on the first UTC day
+;   nDay1 = ind2[0]-1
+;   ; nDay2 is the index of the last point on the second UTC day
+;   nDay2 = ind2[n_elements(ind2)-1]
+;endif else nDay1 = nPts-1
+
+; UPDATE FOR SEAC4RS!! (jaf, 8/16/13)
+; Files start at 21UTC on YYYYMMDD, so most of flight will be in
+; previous day's timeseries file, some in "current day" file.
+; NOTE: Timeseries files are instantaneous. Use hour 2200 here,
+; because otherwise the code will find the value for 2100 on the 
+; second day, which will be 24 hours too late.
+ind_prev_day = where( time le 22., count_pd )
+if ( count_pd gt 0 ) then begin
+   ; nDay1 is the index of the last point in the previous day file
+   ; nDay2 is the index of the last point in the current day file
+   nDay1 = ind_prev_day[count_pd-1]
+   if (nDay1 eq nPts-1) then nDay2 = -1 else nDay2 = nPts-1
+endif else begin
+   nDay1 = -1     ; no points in previous file
+   nDay2 = nPts-1
+endelse
+
+; Also need to update time for > 24 UTC
+ind24 = where(time ge 24., count_24)
+if ( count_24 gt 0 ) then time[ind24] = time[ind24]-24.
  
 ;---------------------------------------------------------------------------
 ;  Plot observations along flight track
@@ -228,29 +249,19 @@ axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1,$
 ;---------------------------------------------------------------------------
 ;  Plot GEOS-Chem cross-section (curtain) along flight track
 ;---------------------------------------------------------------------------
-; Specify filename for timeseries files
-tsfi = '/as/scratch/bmy/NRT/run.NA/timeseries/ts'+$
-;tsfi = '/as/cache/2013-08/bmy/NRT_archive/NA_ts/ts'+$
-;tsfi = '/home/skim/SEAC4RS_Mission_Code/NRT/run.NA/timeseries/ts'+$
-       flightdates+'.bpch'
 
-;s='spawn,''gunzip '+ tsfi
-;status=execute(s)
+; Directory for timeseries files
+tsdir = '/as/scratch/bmy/NRT/run.NA/timeseries/'
+tsfi1 = tsdir+'ts'+string(long(flightdates)-1, format='(i8.8)')+'.bpch'
+tsfi2 = tsdir+'ts'+flightdates+'.bpch'
 
-; Get timeseries data
+; Get a dummy datablock to do some of the set-up
+; Choose based on file we will need to read regardless
+FIRST = 1L
+if ( nDay1 gt 0 ) then tsfi = tsfi1 else tsfi = tsfi2
 
-; Special handling for AOD
-if keyword_set(AOD) then begin
-   DIAGN='OD-MAP-$'
-   ctm_get_data, datainfo, DiagN, filename = tsfi, tracer = 6
-   ctm_get_data, datainfo1, DiagN, filename = tsfi, tracer = 9
-   ctm_get_data, datainfo2, DiagN, filename = tsfi, tracer = 12
-   ctm_get_data, datainfo3, DiagN, filename = tsfi, tracer = 15
-   ctm_get_data, datainfo4, DiagN, filename = tsfi, tracer = 18
-   ctm_get_data, datainfo5, DiagN, filename = tsfi, tracer = 4
-endif else ctm_get_data, datainfo, DiagN, filename = tsfi, tracer = tracer
-; nBlks is the number of blocks (nominally, one for every time)
-nBlks = n_elements(datainfo)
+; Read data, even though we won't use it here
+ctm_get_data,datainfo,diagn,filename=tsfi,tracer=1
 
 ; For SEAC4RS, only the North American region is saved in the
 ; timeseries files, so the indexing doesn't match the default
@@ -262,92 +273,105 @@ nBlks = n_elements(datainfo)
 iFirst=DataInfo[0].first[0]-1
 ; jFirst is the first index in the latitude dimension.
 jFirst=DataInfo[0].first[1]-1
-
+   
 ; Extract grid information. 
 GetModelAndGridInfo,DataInfo[0],ModelInfo,GridInfo
-;ModelInfo = ctm_type( 'GEOS5_47L', res = [0.3125,0.25] )
-;GridInfo  = ctm_grid(ModelInfo)
-
+ 
 ; Find the index of the vertical gridbox nearest to the top of the
 ; domain, specified by ztop.
 near_z = Min(abs(gridinfo.zmid-ztop),iztop)
-zmid = GridInfo.zmid(0:iztop)
+zmid = GridInfo.zmid[0:iztop]
 
 ; Find xdim and ydim, the total size of the longitude and latitude
 ; dimensions, respectively
-temp = *(datainfo(0).data)
-temp = size(temp, /dimensions)
-xdim = temp(0)
-ydim = temp(1)
+temp = *(datainfo[0].data)
+xdim = (size(temp, /dimensions))[0]
+ydim = (size(temp, /dimensions))[1]
 
-; Get the longitudes included in the domain
-lon_mod = GridInfo.xmid(iFirst:xdim+iFirst-1)
-
-; Convert longitudes from [-180,180] to [0, 360] for consistency
-; with aircraft data
-ind = where(lon_mod lt 0)
-lon_mod(ind) = lon_mod(ind)+360
+; Get the longitudes included in the domain and convert from [-180,180]
+; to [0, 360] for consistency with aircraft data
+lon_mod = GridInfo.xmid[iFirst:xdim+iFirst-1]
+lon_ind = where(lon_mod lt 0)
+lon_mod[lon_ind] = lon_mod[lon_ind]+360
 
 ; Get the latitudes included in the domain
-lat_mod = GridInfo.ymid(jFirst:ydim+jFirst-1)
+lat_mod = GridInfo.ymid[jFirst:ydim+jFirst-1]
  
-; Get the UTC for each record in the timeseries files (in units of hour)
-UTC = dblarr( nBlks )
-for i = 0, nBlks-1 do begin
-   UTC[i] = datainfo[i].tau0 - nymd2tau( long(flightdates) )
-endfor
- 
-; Loop over the 1-min observations for the first day.
-  for i = 0, nDay1 do begin
- 
-    ; Extract the sampled vertical profile by finding the index
-    ; of the nearest model lon, lat, and time
-    near_time = Min(Abs(UTC - Time[i]),j)
-    near_lat  = Min(Abs(lat_mod - Lat[i]), jj)
-    near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
-    ; Special handling for AOD
-    if keyword_set(AOD) then $
-       array = *( datainfo[j].data ) + *( datainfo1[j].data ) + $
-               *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
-               *( datainfo4[j].data ) + *( datainfo5[j].data ) else $
-       array = *( datainfo[j].data )
-    ; Scale the profile by fscale to get the units right
-    array = array * fscale
-    ; Using only the data up to ztop, save the profile
-    profile = reform( array(ii, jj, 0:iztop))
- 
-    ; Combine vertical profiles into a cross-section
-    if ( i eq 0 ) then begin
-      curtain = transpose( profile )
-    endif else begin
-      curtain = [curtain, transpose( profile ) ]
-   endelse
- 
-  endfor  ; End of loop over # of 1-min samples for Day 1
+; Start with "previous" day
+if ( nDay1 ge 0 ) then begin
 
-; If the flight spans 2 UTC days, repeat the process 
-if N_Elements(nDay2) ne 0 then begin
-   ; Increment the flightdate by 1 in the timeseries filename
-   tsfi = '/as/scratch/bmy/NRT/run.NA/timeseries/ts'+$
-     string(long(flightdates)+1, format = '(i8.8)')+'.bpch'
-   ; Get timeseries data
+   ; Special cases
+   if keyword_set(AOD) then begin
+      DIAGN='OD-MAP-$'
+      ctm_get_data, datainfo,  DiagN, filename = tsfi1, tracer = 6
+      ctm_get_data, datainfo1, DiagN, filename = tsfi1, tracer = 9
+      ctm_get_data, datainfo2, DiagN, filename = tsfi1, tracer = 12
+      ctm_get_data, datainfo3, DiagN, filename = tsfi1, tracer = 15
+      ctm_get_data, datainfo4, DiagN, filename = tsfi1, tracer = 18
+      ctm_get_data, datainfo5, DiagN, filename = tsfi1, tracer = 4
+   endif else ctm_get_data, datainfo, DiagN, filename = tsfi1, tracer = tracer
+   
+   ; nBlks is the number of blocks (nominally, one for every time)
+   nBlks = n_elements(datainfo)
+   
+   ; Get the UTC for each record in the timeseries files (in units of hour)
+   ; Update for SEAC4RS
+   UTC = dblarr( nBlks )
+   for i = 0, nBlks-1 do $
+       UTC[i] = (Tau2YYMMDD(datainfo[i].tau0)).Hour
+ 
+   ; Loop over the 1-min observations for the first day.
+   for i = 0, nDay1 do begin
+ 
+       ; Extract the sampled vertical profile by finding the index
+       ; of the nearest model lon, lat, and time
+       near_time = Min(Abs(UTC - Time[i]),j)
+       near_lat  = Min(Abs(lat_mod - Lat[i]), jj)
+       near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
+
+       ; Special handling for AOD
+       if keyword_set(AOD) then $
+          array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
+                  *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
+                  *( datainfo4[j].data ) + *( datainfo5[j].data ) else $
+          array = *( datainfo[j].data  )
+
+       ; Scale the array by fscale to get the units right
+       array = array * fscale
+
+       ; Using only the data up to ztop, save the profile
+       profile = reform( array(ii, jj, 0:iztop))
+    
+       ; Combine vertical profiles into a cross-section
+       if ( FIRST ) then begin
+         curtain = transpose( profile )
+         FIRST = 0L
+       endif else curtain = [curtain, transpose( profile ) ]
+    
+     endfor  ; End of loop over # of 1-min samples for Day 1
+endif        ; "Previous" day
+
+; Repeat the process for the "current" day
+if ( nDay2 ge 0 ) then begin
+
    ; Special handling for AOD
    if keyword_set(AOD) then begin
       DIAGN='OD-MAP-$'
-      ctm_get_data, datainfo, DiagN, filename = tsfi, tracer = 6
-      ctm_get_data, datainfo1, DiagN, filename = tsfi, tracer = 9
-      ctm_get_data, datainfo2, DiagN, filename = tsfi, tracer = 12
-      ctm_get_data, datainfo3, DiagN, filename = tsfi, tracer = 15
-      ctm_get_data, datainfo4, DiagN, filename = tsfi, tracer = 18
-      ctm_get_data, datainfo5, DiagN, filename = tsfi, tracer = 4
-   endif else ctm_get_data, datainfo, DiagN, filename = tsfi, tracer = tracer
+      ctm_get_data, datainfo,  DiagN, filename = tsfi2, tracer = 6
+      ctm_get_data, datainfo1, DiagN, filename = tsfi2, tracer = 9
+      ctm_get_data, datainfo2, DiagN, filename = tsfi2, tracer = 12
+      ctm_get_data, datainfo3, DiagN, filename = tsfi2, tracer = 15
+      ctm_get_data, datainfo4, DiagN, filename = tsfi2, tracer = 18
+      ctm_get_data, datainfo5, DiagN, filename = tsfi2, tracer = 4
+   endif else ctm_get_data, datainfo, DiagN, filename = tsfi2, tracer = tracer
+
    nBlks = n_elements(datainfo)
  
    ; Get UTC for each data record
+   ; Update for SEAC4RS
    UTC = dblarr( nBlks )
-   for i = 0, nBlks-1 do begin
-      UTC[i] = datainfo[i].tau0 - nymd2tau( long(flightdates)+1 )
-   endfor
+   for i = 0, nBlks-1 do $
+       UTC[i] = (Tau2YYMMDD(datainfo[i].tau0)).Hour
  
    ; Loop over # of 1-min samples
    for i = nDay1+1, nDay2 do begin
@@ -356,19 +380,25 @@ if N_Elements(nDay2) ne 0 then begin
       near_time = Min(Abs(UTC - Time[i]),j)
       near_lat  = Min(Abs(lat_mod - Lat[i]), jj)
       near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
-       ; Special handling for AOD
-       if keyword_set(AOD) then $
-          array = *( datainfo[j].data ) + *( datainfo1[j].data ) + $
-                  *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
-                  *( datainfo4[j].data ) + *( datainfo5[j].data ) else $
-          array = *( datainfo[j].data )
+
+      ; Special handling for AOD
+      if keyword_set(AOD) then $
+         array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
+                 *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
+                 *( datainfo4[j].data ) + *( datainfo5[j].data ) else $
+         array = *( datainfo[j].data  )
+
       ; Scale data by fscale
       array = array * fscale
+
       ; Reform relevant part of profile
       profile = reform( array(ii, jj, 0:iztop))
  
       ; Combine vertical profiles into a cross-section 
-      curtain = [curtain, transpose( profile ) ]
+      if ( FIRST ) then begin
+        curtain = transpose( profile )
+        FIRST = 0L
+      endif else curtain = [curtain, transpose( profile ) ]
       
    endfor  ; End of loop over # of 1-min observations for Day 2 
    
