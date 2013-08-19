@@ -367,8 +367,9 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   ;
   ;    status = Execute( s )
   ;
-  ;    ; Convert from ug C/m3 to ug/m3
-  ;    Data = oc / 1.8
+  ; Check this for SEAC4RS!!!
+  ;;    ; Convert from ug C/m3 to ug/m3
+  ;;    Data = oc * 2.1
 
   endif else begin
 
