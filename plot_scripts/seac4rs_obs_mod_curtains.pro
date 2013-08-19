@@ -99,6 +99,7 @@ if N_Elements(species_in) eq 0 then begin
    species_in='CO'
    tracer=4
 endif
+if N_Elements(diagn) eq 0 then diagn = 'IJ-AVG-$'
 if N_Elements(platform) eq 0 then platform = 'DC8'
 if N_Elements(flightdates) eq 0 then flightdates='20130806'
 if N_Elements(fscale) eq 0 then fscale = 1
@@ -330,10 +331,11 @@ if ( nDay1 ge 0 ) then begin
        near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
 
        ; Special handling for AOD
-       if keyword_set(AOD) then $
+       if keyword_set(AOD) then begin
           array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
                   *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
-                  *( datainfo4[j].data ) + *( datainfo5[j].data ) else $
+                  *( datainfo4[j].data ) + *( datainfo5[j].data ) 
+       endif else $
           array = *( datainfo[j].data  )
 
        ; Scale the array by fscale to get the units right
@@ -382,10 +384,11 @@ if ( nDay2 ge 0 ) then begin
       near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
 
       ; Special handling for AOD
-      if keyword_set(AOD) then $
+      if keyword_set(AOD) then begin
          array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
                  *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
-                 *( datainfo4[j].data ) + *( datainfo5[j].data ) else $
+                 *( datainfo4[j].data ) + *( datainfo5[j].data )
+       endif else $
          array = *( datainfo[j].data  )
 
       ; Scale data by fscale
