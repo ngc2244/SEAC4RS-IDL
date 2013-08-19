@@ -245,7 +245,7 @@ if n_elements(mindata) eq 0 then mindata=min([species,species_mod])
 if n_elements(maxdata) eq 0 then maxdata=max([species,species_mod])
 
 ; Plot individual data points
-plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,10],ystyle=9,$
+plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,ceil(altrange[1])],ystyle=9,$
 	xrange=[mindata, maxdata], xstyle=9, xtitle=xtitle,$
 	ytitle=ytitle,title=title
 oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
