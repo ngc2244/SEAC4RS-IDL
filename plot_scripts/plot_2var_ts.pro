@@ -78,7 +78,7 @@
 pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
          Var2, Platform2, Model=Model, maxdata1=maxdata1,   $
 	 mindata1=mindata1, maxdata2=maxdata2, mindata2=mindata2,$
-	 _Extra=_Extra
+	 doyrange=doyrange,_Extra=_Extra
  
   ; Default to use altitude as the second variable 
   If not Keyword_Set( Var2 ) and                   $
@@ -103,6 +103,16 @@ pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
   ; Open the time coordinate
   Time1 = Call_Function( GetData, 'DOY', Platform1, FlightDates, _extra=_extra )
   Time2 = Call_Function( GetData, 'DOY', Platform2, FlightDates, _extra=_extra )
+
+  ; Subset part of flight
+  if Keyword_Set(doyrange) then begin
+     doyind = where( Time1 ge min(doyrange) and Time1 le max(doyrange) and $
+                     Time2 ge min(doyrange) and Time2 le max(doyrange) )
+     Time1 = Time1[doyind]
+     Time2 = Time2[doyind]
+     Data1 = Data1[doyind]
+     Data2 = Data2[doyind]
+  endif
  
   ; Set up the plot without plotting any data
   if ( n_elements(maxdata1) eq 0 ) then maxdata1=max(Data1,/nan)
