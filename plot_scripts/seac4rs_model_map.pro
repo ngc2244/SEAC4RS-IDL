@@ -60,7 +60,8 @@
 
 pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 		    mindata=mindata,maxdata=maxdata, unit=unit,region=region,$
-		    oplot_data=oplot_data,save=save,fscale=fscale,_extra=_extra
+		    limit=limit,oplot_data=oplot_data,save=save,fscale=fscale,$
+		    _extra=_extra
 
    ; Set defaults
    if n_elements(species_in)  eq 0 then species_in='CO'
@@ -72,8 +73,15 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    endif
    if n_elements(alts) eq 0 then alts=[0,12]
    if n_elements(fscale) eq 0 then fscale=1
+
+   if n_elements(region) gt 0 and n_elements(limit) gt 0 then begin
+     print,'Specify region or limit but not both!'
+     return
+   endif
+
    if (n_elements(region) eq 0) then region=''
 
+   if n_elements(limit) eq 0 then begin
    case strlowcase(region) of
      'west'     : limit=[30,-127,50,-110]
      'w'        : limit=[30,-127,50,-110]
@@ -84,6 +92,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
      'na'       : limit=[9,-130,60,-60]
      else:      limit=[25,-127,50,-65]
    endcase
+   endif
 
    ; NRT Directory
    dir = '/as/scratch/bmy/NRT/run.NA/bpch/'
@@ -118,11 +127,22 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
    ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
    TracerName = TracerStruct.name
-   Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
+
+   ; Special case for MVK+MACR
+   if (strupcase(species_in) eq 'MVK_MAC') then $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MVK') )] else $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
 
    ; Read model fields
    ctm_get_data,  DataInfo, 'IJ-AVG-$', filename=file,  tracer=tracer
    Species_Mod = *(DataInfo.Data) * fscale
+
+   ; For MVK+MACR, need to add them both
+   if (strupcase(species_in) eq 'MVK_MAC') then begin
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MACR') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+   endif
 
    ; Get grid information
    GetModelAndGridInfo, DataInfo, ModelInfo, GridInfo

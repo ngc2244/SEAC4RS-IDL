@@ -50,10 +50,16 @@
 ;-----------------------------------------------------------------------
 
 pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
-	maxdata=maxdata, diff=diff, _extra=_extra
+	maxdata=maxdata, diff=diff, limit=limit, _extra=_extra
+
+  if n_elements(region) gt 0 and n_elements(limit) gt 0 then begin
+     print,'Specify region or limit but not both!'
+     return
+  endif
 
   if (n_elements(region) eq 0) then region=''
 
+  if n_elements(limit) eq 0 then begin
   case strlowcase(region) of
      'west'     : limit=[30,-127,50,-110]
      'w'        : limit=[30,-127,50,-110]
@@ -64,6 +70,7 @@ pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
      'na'       : limit=[9,-130,60,-60]
      else:      limit=[25,-127,50,-65]
   endcase
+  endif
 
   myct,/WhGrYlRd
 
@@ -77,4 +84,5 @@ pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
   scatterplot_datacolor,lon,lat,data,/overplot,zmin=mindata,$
         zmax=maxdata,/xstyle,/ystyle,_extra=_extra,$
         CBposition=[0.2,-0.1,0.8,-0.07]
+
 end
