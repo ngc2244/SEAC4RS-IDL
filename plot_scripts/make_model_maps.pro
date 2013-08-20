@@ -74,7 +74,12 @@ fscale=1
 
 ; For frequently plotted species, specify the min/max and unit to be used. 
 species = strupcase(species)
-CASE species of
+
+if ( species eq 'HCHO_LIF' or species eq 'HCHO_CAMS' or species eq 'CH2O' or $
+     species eq 'CH2O_LIF' or species eq 'CH2O_CAMS' ) then mspecies='HCHO' else $
+   mspecies = species
+
+CASE mspecies of
     'CO' : begin
 	MinData = 50
 	MaxData = 200 
@@ -97,7 +102,7 @@ CASE species of
 	Unit = 'ppb'
         fscale = 1./5
     end
-    'HCHO' or 'CH2O' : begin
+    'HCHO' : begin
 	MinData = 0
 	MaxData = 3d3 
 	Unit = 'ppt'
@@ -113,6 +118,6 @@ if ~keyword_set(oplot_data) then oplot_data=0
 ; Plot the data over the US
 seac4rs_model_map,species,platform,flightdates=flightdates,mindata=mindata,$
                   maxdata=maxdata,unit=unit,oplot_data=oplot_data,       $
-		  fscale=fscale,_extra=_extra
+		  fscale=fscale,mspecies=mspecies,_extra=_extra
  
 end

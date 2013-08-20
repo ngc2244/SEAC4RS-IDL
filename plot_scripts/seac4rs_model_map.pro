@@ -61,10 +61,11 @@
 pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 		    mindata=mindata,maxdata=maxdata, unit=unit,region=region,$
 		    limit=limit,oplot_data=oplot_data,save=save,fscale=fscale,$
-		    _extra=_extra
+		    mspecies=mspecies,_extra=_extra
 
    ; Set defaults
    if n_elements(species_in)  eq 0 then species_in='CO'
+   if n_elements(mspecies)  eq 0 then mspecies=species_in
    if n_elements(platform)    eq 0 then platform='DC8'
    if n_elements(flightdates) eq 0 then flightdates='20130806'
    if (strpos(flightdates,'*') ge 0) or (n_elements(flightdates) gt 1) then begin
@@ -129,16 +130,16 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    TracerName = TracerStruct.name
 
    ; Special case for MVK+MACR
-   if (strupcase(species_in) eq 'MVK_MAC') then $
+   if (strupcase(mspecies) eq 'MVK_MAC') then $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MVK') )] else $
-      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(mspecies) )]
 
    ; Read model fields
    ctm_get_data,  DataInfo, 'IJ-AVG-$', filename=file,  tracer=tracer
    Species_Mod = *(DataInfo.Data) * fscale
 
    ; For MVK+MACR, need to add them both
-   if (strupcase(species_in) eq 'MVK_MAC') then begin
+   if (strupcase(mspecies) eq 'MVK_MAC') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MACR') )]
       ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale

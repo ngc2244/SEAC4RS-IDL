@@ -113,13 +113,17 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
                 if (platform eq 'dc8') then field = 'O3_ESRL'
                 if (platform eq 'er2') then field = 'O3_UAS'
                end
-    'hcho'   : field = 'CH2O_LIF'
-    'ch2o'   : field = 'CH2O_LIF'
-    'so2'    : field = 'SO2_GTCIMS'
+    ; LIF (Hanisco) is default for now
+    'hcho'   : field = 'ch2o_lif'
+    'ch2o'   : field = 'ch2o_lif'
+    'hcho_lif': field = 'ch2o_lif'
+    'hcho_cams': field = 'ch2o_cams'
+    'so2'    : field = 'so2_gtcims'
     'isop'   : field = 'isoprene'
     'bc'     : field = 'BC_mass_90_550_nm_HDSP2'
-               ; only saga for now
+    ; SAGA is default for now (more data available)
     'so4'    : field = 'saga_so4'
+    'hno3_no3': field = 'hno3_no3_lt1um_saga'
   else:
   endcase
 
@@ -142,20 +146,22 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Form the fractional DOY from the integer part and fractional part 
       Data = jday + utc / (24. * 3600.) 
  
-  ; Special Case for SOx
-  ; Comment out, lei
-  ;endif else If field eq 'fa_sox' then begin
-  ; 
-  ;    Print, 'Reading fields for fa SOx from file: '+file+' ...'
-  ;
-  ;    ; Read the integer day of year
-  ;    s = 'so2 = ' + Platform + '.so2' 
-  ;    status = Execute( s )  
+  ; Special Case for SAGA SOx
+  endif else If field eq 'saga_sox' then begin
+   
+      Print, 'Reading fields for SAGA SOx from file: '+file+' ...'
+  
+      ; Read the SO2
+      s = 'so2 = ' + Platform + '.so2_gtcims' 
+      status = Execute( s )  
  
-  ;    ; Read the time UTC
-  ;    s = 'fine_aerosol_sulfate = ' + Platform + '.fine_aerosol_sulfate' 
-  ;    status = Execute( s )  
-  ;
+      ; Read the AMS SO4
+      s = 'saga_so4 = ' + Platform + '.Sulfate_lt1um_SAGA' 
+      status = Execute( s )  
+
+      ; Convert units from ug/m3 to ppt for addition to SO2 in pptv
+      data = so2 + saga_so4 / (96d-3 * ( 1.29 / 28.97 ))
+  
   ;    if (keyword_set(nss)) then begin
   ;       s = 'sodium = ' + Platform + '.Na'
   ;       status = Execute( s )
@@ -166,39 +172,10 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   ;                  (23./96.) * 0.252 * sodium
   ;    endif
 
-  ;    ; Sum for total SOx
-  ;    Data = so2 + fine_aerosol_sulfate
- 
-  ; Special Case for  fine_aerosol_sulfate
-  ; Comment out, lei
-  ;endif else If field eq 'fine_aerosol_sulfate' then begin
-  ; 
-  ;    Print, 'Reading fields for fa SO4 from file: '+file+' ...'
-  ; 
-  ;    ; Read the time UTC
-  ;    s = 'fine_aerosol_sulfate = ' + Platform + '.fine_aerosol_sulfate' 
-  ;    status = Execute( s )  
-  ;
-  ;    if (keyword_set(nss)) then begin
-  ;       s = 'sodium = ' + Platform + '.Na'
-  ;       status = Execute( s )
-  ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then fine_aerosol_sulfate[ind]=!Values.f_nan
-  ;       ; seasalt component is 0.252*sodium in MASS units, but we have ppt
-  ;       fine_aerosol_sulfate = fine_aerosol_sulfate - $
-  ;                  (23./96.) * 0.252 * sodium
-  ;    endif
-  ; 
-  ;    ; Convert units from ppt to nmol/m3
-  ;    if ~( keyword_set(ppt) ) then $
-  ;    ;data = 96d-3 * ( 1.29 / 28.97 ) * fine_aerosol_sulfate $
-  ;    data = ( 1.29 / 28.97 ) * fine_aerosol_sulfate $
-  ;    else data = fine_aerosol_sulfate
-  ;
   ; Special Case for SAGA sulfate < 1um
   endif else If field eq 'saga_so4' then begin
   
-      Print, 'Reading fields for SO4 from file: '+file+' ...'
+      Print, 'Reading fields for SAGA SO4 from file: '+file+' ...'
   
       ; Read the time UTC
       s = 'so4 = ' + Platform + '.sulfate_lt1um_SAGA'
@@ -219,167 +196,141 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       data = so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
       else data = so4
 
-  ; Special Case for coarse SAGA ammonium 
-  ; Comment out, lei
-  ;endif else If field eq 'saga_nh4' then begin
-  ; 
-  ;    Print, 'Reading fields for NH4 from file: '+file+' ...'
-  ; 
-  ;    ; Read the time UTC
-  ;    s = 'nh4 = ' + Platform + '.NH4'
-  ;    status = Execute( s )  
-  ;
-  ;    ; Convert units from ppt to nmole/m3
-  ;    if ~( keyword_set(ppt) ) then $
-  ;    ;data = 18d-3 * ( 1.29 / 28.97 ) * nh4 $
-  ;    data = ( 1.29 / 28.97 ) * nh4 $
-  ;    else data = nh4
-
-  ; Special Case for coarse SAGA nitrate 
-  ; Comment out, lei
-  ;endif else If field eq 'saga_no3' then begin
-  ; 
-  ;    Print, 'Reading fields for NO3 from file: '+file+' ...'
-  ;
-  ;    ; Read the time UTC
-  ;    s = 'no3 = ' + Platform + '.NO3'
-  ;    status = Execute( s )  
-  ;
-  ;    ; Convert units from ppt to nmole/m3
-  ;    if ~( keyword_set(ppt) ) then $
-  ;    ;data = 62d-3 * ( 1.29 / 28.97 ) * no3 $
-  ;    data = ( 1.29 / 28.97 ) * no3 $
-  ;    else data = no3
-
-  ; Special Case for SOx
-  ; Comment out, lei
-  ;endif else If field eq 'sox' then begin
-  ; 
-  ;    Print, 'Reading fields for SOx from file: '+file+' ...'
-  ; 
-  ;    ; Read the integer day of year
-  ;    s = 'so2 = ' + Platform + '.so2' 
-  ;    status = Execute( s )  
-  ; 
-  ;    ; Read the time UTC
-  ;    s = 'sulphate = ' + Platform + '.sulphate' 
-  ;    status = Execute( s )  
-  ;
+  ; Special Case for AMS SOx
+  endif else If field eq 'ams_sox' then begin
+   
+      Print, 'Reading fields for AMS SOx from file: '+file+' ...'
+   
+      ; Read the integer day of year
+      s = 'so2 = ' + Platform + '.so2_gtcims'
+      status = Execute( s )  
+   
+      ; Read the time UTC
+      s = 'ams_so4 = ' + Platform + '.sulfate_lt_1um_AMS' 
+      status = Execute( s )  
+  
   ;    if (keyword_set(nss)) then begin
   ;       s = 'sodium = ' + Platform + '.Na'
   ;       status = Execute( s )
   ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then sulphate[ind]=!Values.f_nan
+  ;       if ind[0] ge 0 then ams_so4[ind]=!Values.f_nan
   ;       ; seasalt component is 0.252*sodium, but Na is in pptv
-  ;       sulphate = sulphate - $
+  ;       ams_so4 = ams_so4 - $
   ;                  0.252 * ( ( 23.*1.29) / 28.97 ) * 1d-3 * sodium
   ;    endif
-  ;
-  ;    ; Convert units from ug/m3 to ppt for addition to SO2 in pptv
-  ;    sulphate = ( 28.97 / (96.*1.29) ) * 1d3 * sulphate
-  ;
-  ;    ; Sum for total SOx
-  ;    Data = so2 + sulphate
+  
+      ; Convert units from ug/m3 to ppt for addition to SO2 in pptv
+      data = so2 + ams_so4 / (96d-3 * ( 1.29 / 28.97 ))
  
   ; Special Case for AMS Sulfate (units of microgram/m3) 
-  ; Comment out, lei
-  ;endif else If field eq 'sulphate' then begin
-  ;
-  ;    Print, 'Reading fields for AMS Sulphate from file: '+file+' ...'
-  ;
-  ;    s = 'sulphate = ' + Platform + '.Sulphate'
-  ;
-  ;    status = Execute( s )
-  ;
+  endif else If field eq 'ams_so4' then begin
+  
+      Print, 'Reading fields for AMS SO4 from file: '+file+' ...'
+  
+      s = 'ams_so4 = ' + Platform + '.sulfate_lt_1um_AMS' 
+  
+      status = Execute( s )
+  
   ;    if (keyword_set(nss)) then begin
   ;       s = 'sodium = ' + Platform + '.Na'
   ;       status = Execute( s )
   ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then sulphate[ind]=!Values.f_nan
+  ;       if ind[0] ge 0 then ams_so4[ind]=!Values.f_nan
   ;       ; seasalt component is 0.252*sodium (MASS ratio), but Na is in pptv
-  ;       sulphate = sulphate - $
+  ;       ams_so4 = ams_so4 - $
   ;                  0.252 * ( ( 23.*1.29) / 28.97 ) * 1d-3 * sodium
   ;    endif
-  ;
-  ;    if (keyword_set(ppt)) then $
-  ;    ; Convert units from ug/m3 to ppt
-  ;    Data = ( 28.97 / (96.*1.29) ) * 1d3 * sulphate $
-  ;    else $
-  ;    ; Convert to nmol/m3
-  ;    Data = ( 1d3 / 96. ) * sulphate
+  
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = ams_so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
+      else data = ams_so4
 
   ; Special Case for AMS Ammonium (units of microgram/m3) 
-  ; Comment out, lei
-  ;endif else If field eq 'ammonium' then begin
-  ;
-  ;    Print, 'Reading fields for AMS Ammonium from file: '+file+' ...'
-  ;
-  ;    s = 'ammonium = ' + Platform + '.Ammonium'
-  ;
-  ;    status = Execute( s )
-  ;
-  ;    if (keyword_set(ppt)) then $
-  ;    ; Convert units from ug/m3 to ppt
-  ;    Data = ( 28.97 / (18.*1.29) ) * 1d3 * ammonium $
-  ;    else $
-  ;    ; Convert to nmol/m3
-  ;    Data = ( 1d3 / 18. ) * ammonium
+  endif else If field eq 'nh4' then begin
+  
+      Print, 'Reading fields for AMS NH4 from file: '+file+' ...'
+  
+      s = 'ams_nh4 = ' + Platform + '.ammonium_lt_1um_AMS' 
+  
+      status = Execute( s )
+  
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = ams_nh4 / (18d-3 * ( 1.29 / 28.97 ) ) $
+      else data = ams_nh4
 
   ; Special Case for AMS Nitrate (units of microgram/m3) 
-  ; Comment out, lei
-  ;endif else If field eq 'nit' or field eq 'nitrate' then begin
-  ;
-  ;    Print, 'Reading fields for AMS Nitrate from file: '+file+' ...'
-  ;
-  ;    s = 'Nitrate = ' + Platform + '.Nitrate'
-  ;
-  ;    status = Execute( s )
-  ;
-  ;    if (keyword_set(ppt)) then $
-  ;    ; Convert units from ug/m3 to ppt
-  ;    Data = ( 28.97 / (62.*1.29) ) * 1d3 * Nitrate $
-  ;    else $
-  ;    ; Convert to nmol/m3
-  ;    Data = ( 1d3 / 62. ) * nitrate
+  endif else If field eq 'nit' or field eq 'no3' then begin
+  
+      Print, 'Reading fields for AMS NO3 from file: '+file+' ...'
+  
+      s = 'ams_no3 = ' + Platform + '.nitrate_lt_1um_AMS' 
+  
+      status = Execute( s )
+  
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = ams_no3 / (62d-3 * ( 1.29 / 28.97 ) ) $
+      else data = ams_no3
 
   ; Special Case for AMS Ammonium/Sulphate ratio
-  ; Comment out, lei
-  ;endif else If field eq 'nh4_so4_ratio' then begin
-  ;
-  ;     Print, 'Reading fields for AMS Ammonium & Sulphate from file: '+file
-  ;
-  ;    s = 'ammonium = ' + Platform + '.Ammonium'
-  ;
-  ;    status = Execute( s )
-  ; 
-  ;    s = 'sulphate = ' + Platform + '.Sulphate'
-  ;
-  ;    status = Execute( s )
-  ;
-  ;    ; Calculate molar ratio
-  ;    Data = ( 96./18. ) * ( ammonium/sulphate )
+  endif else If field eq 'nh4_so4_ratio' then begin
+  
+       Print, 'Reading fields for AMS NH4 & SO4 from file: '+file
+  
+      s = 'nh4 = ' + Platform + '.ammonium_lt_1um_AMS' 
+  
+      status = Execute( s )
+   
+      s = 'so4 = ' + Platform + '.sulfate_lt_1um_AMS' 
+  
+      status = Execute( s )
+  
+      ; Calculate molar ratio
+      Data = ( 96./18. ) * ( nh4/so4 )
 
-  ;endif else If field eq 'oc' then begin
-  ;
-  ;    Print, 'Reading OC from file: '+file
-  ;
-  ;    s = 'oc = ' + Platform + '.organicslt_213mz'
-  ;
-  ;    status = Execute( s )
-  ;
-  ; Check this for SEAC4RS!!!
-  ;;    ; Convert from ug C/m3 to ug/m3
-  ;;    Data = oc * 2.1
+  ; Special Case for AMS aerosol neutralization
+  endif else If field eq 'neutralization' then begin
+  
+       Print, 'Reading fields for AMS NH4,  SO4, NO3 from file: '+file
+  
+      s = 'nh4 = ' + Platform + '.ammonium_lt_1um_AMS' 
+      status = Execute( s )
+   
+      s = 'so4 = ' + Platform + '.sulfate_lt_1um_AMS' 
+      status = Execute( s )
+  
+      s = 'no3 = ' + Platform + '.nitrate_lt_1um_AMS' 
+      status = Execute( s )
+  
+      ; Calculate molar ratio
+      ; neutralization (nh4/[2*so4+no3])
+      Data = ( (nh4/18.) / ( (2*so4/96.) + (no3/62.) ) )
+
+  ; Special Case for AMS organic aerosol
+  endif else If field eq 'oa' then begin
+  
+      Print, 'Reading OA from file: '+file
+  
+      s = 'oa = ' + Platform + '.org_lt_1um_ams'
+  
+      status = Execute( s )
+  
+      ; SEAC4RS AMS data are already in ug/m3
+      ;;; Convert from ug C/m3 to ug/m3
+      ;;Data = oa * 2.1
+      Data = oa
 
   endif else begin
 
       ;----------
-      ; All fields except DOY & SOx read here
+      ; All other fields read here
       ;----------
  
       Print, 'Reading '+field+' from file: '+file+'  ...'
  
-      ; Form a string tha reads the field from the desired platform
+      ; Form a string that reads the field from the desired platform
       s = 'Data = ' + Platform + '.' + field 
       status = Execute( s )  
  
@@ -482,11 +433,6 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
   ; Initialize, Drop this element later
   Data = [0]
 
-  ; neutralization (nh4/[2*so4+no3])
-  ; Add this later (jaf, 8/8/13)
-  ;if ( field eq 'acid' ) then data=get_field_acid_seac4rs(flightdates) $
-  ;else begin
- 
   ; Loop over the number of distinct Platforms or FlightDates
   ; Note: If FlightDates='*', then it's only one loop iteration here
   For i = 0, N_Entries-1L do begin
@@ -520,13 +466,10 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
  
   endfor
 
-  ;endelse ;neutralization 
-  
   ; Return NaN if no data were found, 
   ; otherwise drop the first element which is initialized to 0
   If ( n_elements( Data ) eq 1 ) then $
-    return, !Values.f_nan else $ 
-  if ( field ne 'acid' ) then Data = Data[1:*]
+    return, !Values.f_nan else Data = Data[1:*]
 
   ; Comment out, lei
 ;  ;--------------------------------------------------------------

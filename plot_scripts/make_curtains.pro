@@ -64,8 +64,12 @@ pro make_curtains, species, platform, flightdates = flightdates, $
    Unit = '[ppbv]'
  
    species = strupcase(species)
+if ( species eq 'HCHO_LIF' or species eq 'HCHO_CAMS' or species eq 'CH2O' or $
+     species eq 'CH2O_LIF' or species eq 'CH2O_CAMS' ) then mspecies='HCHO' else $
+   mspecies = species
+
  
-   case species of
+   case mspecies of
       'CO': begin
          MinData = 50
          MaxData = 200
@@ -108,7 +112,7 @@ pro make_curtains, species, platform, flightdates = flightdates, $
          DiagN = 'IJ-AVG-$'
          Tracer = 6
        end
-      'HCHO' or 'CH2O': begin
+      'HCHO' : begin
          MinData = 0
          MaxData = 3d3
 	 fscale = 1d3
@@ -120,7 +124,7 @@ pro make_curtains, species, platform, flightdates = flightdates, $
    endcase
  
 seac4rs_obs_mod_curtains, species, platform, diagn, tracer, fscale=fscale, $
-   flightdates=flightdates, mindata=mindata, maxdata=maxdata,             $
+   flightdates=flightdates, mindata=mindata, maxdata=maxdata,$
    mmindata=mmindata, mmaxdata=mmaxdata, unit=unit, _extra=_extra
  
 ctm_cleanup   

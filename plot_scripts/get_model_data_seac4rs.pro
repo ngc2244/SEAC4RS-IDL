@@ -116,6 +116,11 @@ function read_file_model, file, field, ppt=ppt
 
   ; special cases
   if ( field eq 'hcho' ) then field = 'ch2o'
+  if ( field eq 'hcho_cams' ) then field = 'ch2o'
+  if ( field eq 'hcho_lif'  ) then field = 'ch2o'
+  if ( field eq 'no3'  ) then field = 'nit'
+  if ( field eq 'saga_so4' or field eq 'ams_so4' ) then field = 'so4' 
+  if ( field eq 'saga_sox' or field eq 'ams_sox' ) then field = 'sox' 
  
   Case field of
     'co'     :  conv_factor = 1e9    ; v/v -> ppbv
@@ -142,6 +147,7 @@ function read_file_model, file, field, ppt=ppt
     'nit'    :  conv_factor = 1e12 ; mole/mole -> pptv
     'no3'    :  conv_factor = 1e12 ; mole/mole -> pptv
     'sox'    :  conv_factor = 1e12 ; v/v -> pptv
+    'hno3_no3':  conv_factor = 1e12 ; v/v -> pptv
     'oh'     :  conv_factor = 1e12 ; v/v -> pptv
     'hno3'   :  conv_factor = 1e12; pptv
     'ca'     : conv_factor = 1e12; pptv 
@@ -157,18 +163,6 @@ function read_file_model, file, field, ppt=ppt
     else     :  conv_factor = 1
   endcase
 
- if ( field eq 'no3') then field = 'nit'
- 
- ; May not need these in SEAC4RS, TBD (jaf, 8/8/13)
- ;; to use fine_aerosol_sulfate
- ;if ( field eq 'fa_so4' ) then field = 'so4' 
- ;if ( field eq 'fa_sox' ) then field = 'sox' 
- ;
- ;; to use SAGA coarse SO4 and NH4
- if ( field eq 'saga_so4' ) then field = 'so4' 
- ;if ( field eq 'saga_nh4' ) then field = 'nh4' 
- ;if ( field eq 'saga_no3' ) then field = 'nit' 
- 
  if ( ~keyword_set(ppt) and (field eq 'so4' or field eq 'so4s' $
        or field eq 'nh4' or field eq 'nit') ) then begin
     ; first get nmol/m3 (independent of species)
@@ -209,11 +203,31 @@ function read_file_model, file, field, ppt=ppt
     ; Status is success, as long as data contains some elements
     status = n_elements( data ) gt 1
   
+  ; For SAGA HNO3+NO3, we need to add fields together
+  endif else If ( field eq 'hno3_no3' ) then begin
+  
+    Print, 'Reading model HNO3+NO3 from file: '+ file +' ...'
+    
+    Data =  gc.hno3 + gc.no3
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
   endif else If ( field eq 'nh4_so4_ratio' ) then begin
    
     Print, 'Reading model Ammonium & Sulphate from file: '+ file +' ...'
     
     Data =  gc.nh4 / gc.so4
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'neutralization' ) then begin
+   
+    Print, 'Reading model NH4, SO4, NO3 from file: '+ file +' ...'
+    
+    ; neutralization (nh4/[2*so4+no3])
+    Data =  gc.nh4 / (2.*gc.so4 + gc.no3)
   
     ; Status is success, as long as data contains some elements
     status = n_elements( data ) gt 1
@@ -453,11 +467,6 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
   ; Initialize, Drop this element later
   Data = [0]
 
-  ; Neutralization
-  ; Currently not used, lei
-;  if ( field eq 'acid') then data=get_model_acid_seac4rs(flightdates) $
-;  else begin
-
   ; Loop over the number of distinct Platforms or FlightDates
   ; Note: If FlightDates='*', then it's only one loop iteration here
   For i = 0, N_Entries-1L do begin
@@ -505,13 +514,10 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
 
   endfor
 
-;  endelse ;neutralization
-
   ; Return NaN if no data were found, 
   ; otherwise drop the first element which is initialized to 0
   If ( n_elements( Data ) eq 1 ) then $
-    return, !Values.f_nan else $
-    if ( field ne 'acid' ) then Data = Data[1:*]
+    return, !Values.f_nan else Data = Data[1:*]
  
  ; Comment out, lei
 ;  ; If keyword NoCities, then filter the data to remove observations

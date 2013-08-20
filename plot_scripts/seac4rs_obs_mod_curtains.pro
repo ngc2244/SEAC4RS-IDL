@@ -106,6 +106,19 @@ if N_Elements(fscale) eq 0 then fscale = 1
 if N_Elements(ztop) eq 0 then ztop = 12
 if N_Elements(unit) eq 0 then unit = ''
 
+if (n_elements(tracer) eq 0) then begin
+   ; Pick tracer using names from tracerinfo.dat
+   TracerN = indgen(80)+1 ; 80 tracers hardwired for SEAC4RS
+   tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
+   ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
+   TracerName = TracerStruct.name
+
+   ; Special case for MVK+MACR
+   if (strupcase(species_in) eq 'MVK_MAC') then $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MVK') )] else $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
+endif
+
 ; By default, we assume both observations and model output are
 ; available for the specified tracer and set Obs_Only = 0.
 ; If model output is not available, this will be changed later.
@@ -250,6 +263,16 @@ axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1,$
 ;---------------------------------------------------------------------------
 ;  Plot GEOS-Chem cross-section (curtain) along flight track
 ;---------------------------------------------------------------------------
+
+; First check whether this species actually exists in the timeseries file
+if ( tracer ne 1  and tracer ne 2  and tracer ne 4  and tracer ne 6  and $
+     tracer ne 20 and tracer ne 26 and tracer ne 27 and tracer ne 64 and $
+     tracer ne 78 and tracer ne 79 and tracer ne 80 and tracer ne 91 and $
+     tracer ne 92 and tracer ne 93 and tracer ne 94 and tracer ne 95 and $
+     tracer ne 99 and tracer ne 100 ) then begin
+   print,'No timeseries data for this species!'
+   return
+endif
 
 ; Directory for timeseries files
 tsdir = '/as/scratch/bmy/NRT/run.NA/timeseries/'
