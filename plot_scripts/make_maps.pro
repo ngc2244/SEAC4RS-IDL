@@ -100,8 +100,8 @@ CASE species of
     end
     'SO2' : begin
 	MinData = 0
-	MaxData = 2
-	Unit = 'ppbv'
+	MaxData = 2000
+	Unit = 'pptv'
     end
     'CH3CN' : begin
 	MinData = 0
