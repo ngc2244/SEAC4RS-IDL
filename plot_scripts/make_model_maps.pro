@@ -108,6 +108,12 @@ CASE mspecies of
 	Unit = 'ppt'
         fscale = 1d3
     end
+    'OA' : begin
+	MinData = 0
+;	MaxData = 1
+        fscale = 12 * 2.1 / 22.4
+	Unit = 'ug/m3'
+    end
     else:
 ENDCASE
 
