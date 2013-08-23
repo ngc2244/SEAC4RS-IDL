@@ -106,6 +106,7 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
     'alt'    : field = 'GPS_Alt'
                ; No ALTP data for ER2
     'altp'   : if (platform eq 'er2') then field = 'GPS_Alt'
+    'co'     : field = 'CO_DACOM'
     'no'     : field = 'NO_CL'
     'no2'    : field = 'NO2_CL'
     'noy'    : field = 'NOy_CL'
