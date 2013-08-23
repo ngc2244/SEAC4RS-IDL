@@ -61,7 +61,7 @@
 pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 		    mindata=mindata,maxdata=maxdata, unit=unit,region=region,$
 		    limit=limit,oplot_data=oplot_data,save=save,fscale=fscale,$
-		    mspecies=mspecies,_extra=_extra
+		    mspecies=mspecies,outline=outline,_extra=_extra
 
    ; Set defaults
    if n_elements(species_in)  eq 0 then species_in='CO'
@@ -132,15 +132,31 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    ; Special case for MVK+MACR
    if (strupcase(mspecies) eq 'MVK_MAC') then $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MVK') )] else $
+   ; Special case for OA
+   if (strupcase(mspecies) eq 'OA') then $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPI') )] else $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(mspecies) )]
 
    ; Read model fields
    ctm_get_data,  DataInfo, 'IJ-AVG-$', filename=file,  tracer=tracer
    Species_Mod = *(DataInfo.Data) * fscale
 
-   ; For MVK+MACR, need to add them both
+   ; Special cases
    if (strupcase(mspecies) eq 'MVK_MAC') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MACR') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+   endif else if (strupcase(mspecies) eq 'OA') then begin
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPO') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('ASOA') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BBSOA') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BGSOA') )]
       ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
    endif
@@ -214,8 +230,15 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
       lon     = lon[index]
 
       ; Add to map
+      if keyword_set(outline) then begin
+         plotsym,0,thick=2
+         scatterplot_datacolor,lon,lat,species,/overplot,$
+            /nocb,color=1,psym=8,symsize=1.2
+      endif
+	 
       scatterplot_datacolor,lon,lat,species,/overplot,zmin=mindata,$
          zmax=maxdata,/xstyle,/ystyle,/nocb,_extra=_extra
+
 
    nodata:
    endif
