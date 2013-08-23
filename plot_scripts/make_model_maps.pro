@@ -77,6 +77,7 @@ species = strupcase(species)
 
 if ( species eq 'HCHO_LIF' or species eq 'HCHO_CAMS' or species eq 'CH2O' or $
      species eq 'CH2O_LIF' or species eq 'CH2O_CAMS' ) then mspecies='HCHO' else $
+if ( species eq 'SAGA_SO4' or species eq 'AMS_SO4'   ) then mspecies='SO4' else $
    mspecies = species
 
 CASE mspecies of
@@ -113,6 +114,12 @@ CASE mspecies of
 ;	MaxData = 1
         fscale = 12 * 2.1 / 22.4
 	Unit = 'ug/m3'
+    end
+    'BC' : begin
+	MinData = 0
+;	MaxData = 1
+        fscale = 12d3 * 2.1 / 22.4
+	Unit = 'ng/m3'
     end
     else:
 ENDCASE

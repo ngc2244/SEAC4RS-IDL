@@ -117,6 +117,13 @@ if (n_elements(tracer) eq 0) then begin
    if (strupcase(species_in) eq 'MVK_MAC') then $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MVK') )] else $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
+
+   ; Check for no data (where gives -1 so tracer gives 80)
+   if ( Tracer eq 80 and strupcase(Species_In) ne 'BGSOA' ) then begin
+      print,'Species not found in tracerinfo.dat!'
+      return
+   endif
+
 endif
 
 ; By default, we assume both observations and model output are

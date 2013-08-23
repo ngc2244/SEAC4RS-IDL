@@ -135,15 +135,36 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    ; Special case for OA
    if (strupcase(mspecies) eq 'OA') then $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPI') )] else $
+   ; Special case for BC
+   if (strupcase(mspecies) eq 'BC') then $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BCPI') )] else $
+   ; Special case for POA
+   if (strupcase(mspecies) eq 'POA') then $
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPI') )] else $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(mspecies) )]
 
    ; Read model fields
    ctm_get_data,  DataInfo, 'IJ-AVG-$', filename=file,  tracer=tracer
    Species_Mod = *(DataInfo.Data) * fscale
 
+   ; Error catch for species not found (where returned -1 which gave tracer 80)
+   if ( Tracer eq 80 and strupcase(mspecies) ne 'BGSOA' ) then begin
+	print,'Species not found in tracerinfo.dat'
+	return
+   endif
+   
+
    ; Special cases
    if (strupcase(mspecies) eq 'MVK_MAC') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MACR') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+   endif else if (strupcase(mspecies) eq 'BC') then begin
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BCPO') )]
+      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+   endif else if (strupcase(mspecies) eq 'POA') then begin
+      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPO') )]
       ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
    endif else if (strupcase(mspecies) eq 'OA') then begin
