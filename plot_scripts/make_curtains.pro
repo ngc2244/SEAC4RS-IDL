@@ -66,6 +66,7 @@ pro make_curtains, species, platform, flightdates = flightdates, $
    species = strupcase(species)
 if ( species eq 'HCHO_LIF' or species eq 'HCHO_CAMS' or species eq 'CH2O' or $
      species eq 'CH2O_LIF' or species eq 'CH2O_CAMS' ) then mspecies='HCHO' else $
+if ( species eq 'AMS_SO4'  or species eq 'SAGA_SO4'  ) then mspecies='SO4' else $
    mspecies = species
 
  
