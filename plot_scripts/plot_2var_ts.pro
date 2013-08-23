@@ -78,7 +78,7 @@
 pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
          Var2, Platform2, Model=Model, maxdata1=maxdata1,   $
 	 mindata1=mindata1, maxdata2=maxdata2, mindata2=mindata2,$
-	 doyrange=doyrange,_Extra=_Extra
+	 doyrange=doyrange,colors=colors,_Extra=_Extra
  
   ; Default to use altitude as the second variable 
   If not Keyword_Set( Var2 ) and                   $
@@ -122,23 +122,26 @@ pro plot_2var_ts, Var1, Platform1, flightdates=FlightDates, $
 
   ; Change alt axis upper limt
   ;maxdata2 = 10*floor(maxdata2/10)+70
+
+  ; Set default colors
+  if (n_elements(colors) eq 0) then colors=[1,4]
   
   plot, Time1, Data1, ystyle=4, xstyle=9, xtitle='Day of year', /noData, $
     xrange=[min(Time1, max=mx, /NaN), mx], _Extra=_Extra
  
   ; Right y-axis
   axis, /yaxis, yrange=[mindata2, maxdata2], /save, ytitle=Var2, $
-    _Extra=_Extra
+    color=colors[1],_Extra=_Extra
  
   ; Data for right y-axis
-  oplot, Time2, Data2, _Extra=_Extra 
+  oplot, Time2, Data2, color=colors[1],_Extra=_Extra 
   
   ; Left y-axis
   axis, yaxis=0, yrange=[mindata1, maxdata1], /save, $
-    ytitle=Var1, color=4, _Extra=_Extra,/ystyle
+    ytitle=Var1, color=colors[0], _Extra=_Extra,/ystyle
 
   ; Data for left y-axis
-  oplot, Time1, Data1, color=4, _Extra=_Extra
+  oplot, Time1, Data1, color=colors[0], _Extra=_Extra
 
  
 end
