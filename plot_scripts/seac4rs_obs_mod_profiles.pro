@@ -132,6 +132,9 @@ doy_mod = doy_mod[1:*]
  
 ; Interpolate model to observed space
 species_mod = interpol( species_mod, doy_mod, doy )
+
+; Convert lon to -180 to 180
+lon[where(lon gt 180)] = lon[where(lon gt 180)]-360
  
 ; Subselect relevant region, finite data
 if ( n_elements(lonrange) gt 0 and n_elements(latrange) gt 0 ) then begin
