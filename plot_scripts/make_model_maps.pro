@@ -75,9 +75,10 @@ fscale=1
 ; For frequently plotted species, specify the min/max and unit to be used. 
 species = strupcase(species)
 
-if ( species eq 'HCHO_LIF' or species eq 'HCHO_CAMS' or species eq 'CH2O' or $
-     species eq 'CH2O_LIF' or species eq 'CH2O_CAMS' ) then mspecies='HCHO' else $
+if ( species eq 'HCHO_LIF' or species eq 'HCHO_CAMS' or species eq 'HCHO' or $
+     species eq 'CH2O_LIF' or species eq 'CH2O_CAMS' ) then mspecies='CH2O' else $
 if ( species eq 'SAGA_SO4' or species eq 'AMS_SO4'   ) then mspecies='SO4' else $
+if ( species eq 'NO2_TDLIF' ) then mspecies='NO2' else $
    mspecies = species
 
 CASE mspecies of
@@ -97,13 +98,18 @@ CASE mspecies of
 	MaxData = 1
 	Unit = 'ppbv'
     end
+    'NO2' : begin
+	MinData = 0
+	MaxData = 1.0
+	Unit = 'ppbv'
+    end
     'ISOP' : begin
 	MinData = 0
 	MaxData = 1 
 	Unit = 'ppb'
         fscale = 1./5
     end
-    'HCHO' : begin
+    'CH2O' : begin
 	MinData = 0
 	MaxData = 3d3 
 	Unit = 'ppt'

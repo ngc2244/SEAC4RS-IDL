@@ -107,9 +107,9 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
                ; No ALTP data for ER2
     'altp'   : if (platform eq 'er2') then field = 'GPS_Alt'
     'co'     : field = 'CO_DACOM'
-    'no'     : field = 'NO_CL'
-    'no2'    : field = 'NO2_CL'
-    'noy'    : field = 'NOy_CL'
+    'no'     : field = 'NO_ESRL'
+    'no2'    : field = 'NO2_ESRL'
+    'noy'    : field = 'NOy_ESRL'
     'o3'     : begin
                 if (platform eq 'dc8') then field = 'O3_ESRL'
                 if (platform eq 'er2') then field = 'O3_UAS'
@@ -121,7 +121,7 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
     'hcho_cams': field = 'ch2o_cams'
     'so2'    : field = 'so2_gtcims'
     'isop'   : field = 'isoprene'
-    'bc'     : field = 'BC_mass_90_550_nm_HDSP2'
+    'bc'     : field = 'BC_mass_90to550nm_HDSP2'
     ; SAGA is default for now (more data available)
     'so4'    : field = 'saga_so4'
     'hno3_no3': field = 'hno3_no3_lt1um_saga'
