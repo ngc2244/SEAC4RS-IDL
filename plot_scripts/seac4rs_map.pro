@@ -50,7 +50,7 @@
 ;-----------------------------------------------------------------------
 
 pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
-	maxdata=maxdata, diff=diff, limit=limit, _extra=_extra
+	maxdata=maxdata, diff=diff, limit=limit, outline=outline,_extra=_extra
 
   if n_elements(region) gt 0 and n_elements(limit) gt 0 then begin
      print,'Specify region or limit but not both!'
@@ -81,6 +81,12 @@ pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
   if keyword_set(diff) then myct,/diff,ncolors=30 else myct,33,ncolors=30
 
   ; Plot the data, coloring the points by value
+  if keyword_set(outline) then begin
+      plotsym,0,thick=2
+      scatterplot_datacolor,lon,lat,data,/overplot,$
+         /nocb,color=1,psym=8,symsize=1.2
+  endif
+
   scatterplot_datacolor,lon,lat,data,/overplot,zmin=mindata,$
         zmax=maxdata,/xstyle,/ystyle,_extra=_extra,$
         CBposition=[0.2,-0.1,0.8,-0.07]
