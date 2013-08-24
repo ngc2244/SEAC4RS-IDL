@@ -47,6 +47,8 @@
 ;	 OPlot_Data  - If set, the observed data from the DC8 will
 ;		       be plotted on top of the curtain.
 ;        Obs_Only    - Set to only plot observed values.
+;        UTCRange    - Set to only show subset of plot, determined by UTC
+;        Outline     - Set to outline points in black (behind to not obscure)
 ;
 ; OUTPUTS:
 ;	None
@@ -70,6 +72,7 @@
 ; MODIFICATION HISTORY:
 ;        jaf, 13 May 2008: VERSION 1.00
 ;        jaf,  5 Aug 2013: Updated for SENEX/SEAC4RS
+;        jaf, 24 Aug 2013: Add outline functionality
 ;
 ;-
 ; Copyright (C) 2008, Jenny Fisher, Harvard University
@@ -92,7 +95,7 @@ pro seac4rs_obs_mod_curtains, species_in, platform, diagn, tracer,         $
                             unit        = unit,        ztop     = ztop,    $
 			    oplot_data  = oplot_data,  aod      = aod,     $
                             obs_only    = obs_only,    utcrange = utcrange,$
-			    _extra   = _extra
+			    outline     = outline,     _extra   = _extra
  
 ; Set default values if parameters / keywords aren't specified 
 if N_Elements(species_in) eq 0 then begin
@@ -106,9 +109,16 @@ if N_Elements(fscale) eq 0 then fscale = 1
 if N_Elements(ztop) eq 0 then ztop = 12
 if N_Elements(unit) eq 0 then unit = ''
 
+; By default, we assume both observations and model output are
+; available for the specified tracer and set Obs_Only = 0.
+; If model output is not available, this will be changed later.
+if (~keyword_set(obs_only)) then Obs_Only=0
+
+; Pick tracer using names from tracerinfo.dat
 if (n_elements(tracer) eq 0) then begin
-   ; Pick tracer using names from tracerinfo.dat
-   TracerN = indgen(80)+1 ; 80 tracers hardwired for SEAC4RS
+
+   ; 80 tracers hardwired for SEAC4RS
+   TracerN = indgen(80)+1 
    tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
    ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
    TracerName = TracerStruct.name
@@ -125,11 +135,6 @@ if (n_elements(tracer) eq 0) then begin
    endif
 
 endif
-
-; By default, we assume both observations and model output are
-; available for the specified tracer and set Obs_Only = 0.
-; If model output is not available, this will be changed later.
-if (~keyword_set(obs_only)) then Obs_Only=0
 
 ; Get observational data 
 species = $
@@ -173,10 +178,10 @@ if (~keyword_set(obs_only)) then $
  
 ; If no model output is available, set Obs_Only keyword and skip
 ; irrelevant commands
-if (N_Elements(species_mod) eq 1 ) then obs_only=1
+if (N_Elements(species_mod) eq 1 ) then Obs_Only=1
 
+; Get other necessary model parameters, and interpolate model output 
 if (~keyword_set(obs_only)) then begin
-   ; Get other necessary model parameters, and interpolate model output 
    doy_mod = get_model_data_seac4rs('DOY', platform, flightdates,_extra=_extra)
    species_mod = interpol( species_mod, doy_mod, doy )
    if (n_elements(utcrange) gt 0) then species_mod=species_mod[utcind]
@@ -185,6 +190,8 @@ endif
 ; nPts is the number of observations
 nPts = n_elements(lat)
 
+; UPDATE FOR SEAC4RS!! (jaf, 8/16/13)
+; --- ARCTAS version ---
 ; Several flights span two days of UTC time. If there are
 ; observations after midnight, convert these to hour after UTC on
 ; the next day.
@@ -197,7 +204,7 @@ nPts = n_elements(lat)
 ;   nDay2 = ind2[n_elements(ind2)-1]
 ;endif else nDay1 = nPts-1
 
-; UPDATE FOR SEAC4RS!! (jaf, 8/16/13)
+; --- SEAC4RS version ---
 ; Files start at 21UTC on YYYYMMDD, so most of flight will be in
 ; previous day's timeseries file, some in "current day" file.
 ; NOTE: Timeseries files are instantaneous. Use hour 2200 here,
@@ -242,29 +249,51 @@ multipanel, /off
 
 ; Plot flight data along flight track
 window, 0
+if keyword_set(outline) then begin
+      plotsym,0,thick=2
+      scatterplot_datacolor, findgen(nPts)+1, altp, species,       $
+         /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',       $
+         yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,$
+         title = 'Observed '+strupcase(Platform)+' '+              $
+         strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],     $
+         /nocb,color=!myct.black,psym=8,symsize=1.2,_extra=_extra
+     overplot=1
+endif else overplot=0
+
 scatterplot_datacolor, findgen(nPts)+1, altp, species, zmin=mindata,      $
       zmax=maxdata, /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',   $
-      yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,            $
+      yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,          $
       unit=unit, title = 'Observed '+strupcase(Platform)+' '+             $
-      strupcase(species_in), CBposition=[0.15,0.85,.6,0.9], _extra=_extra
+      strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],               $
+      overplot=overplot,symsize=1.0,_extra=_extra
  
 ; Add longitude labels
-axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1,           $
+axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1, $
       xtickname=xtickname_lon, xcharsize=1, ycharsize=1
 
 ; If there is no model output for this species, then stop here. 
-if Obs_Only then goto,no_mod
+if ( Obs_Only ) then return
 
 ; Plot model output along flight track 
 window, 1
+if keyword_set(outline) then begin
+   plotsym,0,thick=2
+   scatterplot_datacolor, findgen(nPts)+1, altp, species_mod,   $
+      /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',       $
+      yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,$
+      title = 'Observed '+strupcase(Platform)+' '+              $
+      strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],     $
+      /nocb,color=!myct.black,psym=8,symsize=1.2,_extra=_extra
+endif
 scatterplot_datacolor, findgen(nPts)+1, altp, species_mod, zmin=mmindata, $
-      zmax=mmaxdata, /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',  $
-      yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,            $
-      unit=unit, title = 'Modeled '+strupcase(Platform)+' '+              $
-      strupcase(species_in), CBposition=[0.15,0.85,.6,0.9], _extra=_extra
+   zmax=mmaxdata, /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',     $
+   yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,             $
+   unit=unit, title = 'Modeled '+strupcase(Platform)+' '+                 $
+   strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],                  $
+   overplot=overplot,symsize=1.0,_extra=_extra
  
 ; Add longitude labels
-axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1,$
+axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1, $
       xtickname=xtickname_lon, xcharsize=1, ycharsize=1
  
 ;---------------------------------------------------------------------------
@@ -272,6 +301,7 @@ axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1,$
 ;---------------------------------------------------------------------------
 
 ; First check whether this species actually exists in the timeseries file
+; This is hardcoded for SEAC4RS diagnostics
 if ( tracer ne 1  and tracer ne 2  and tracer ne 4  and tracer ne 6  and $
      tracer ne 20 and tracer ne 26 and tracer ne 27 and tracer ne 64 and $
      tracer ne 78 and tracer ne 79 and tracer ne 80 and tracer ne 91 and $
@@ -281,7 +311,7 @@ if ( tracer ne 1  and tracer ne 2  and tracer ne 4  and tracer ne 6  and $
    return
 endif
 
-; Directory for timeseries files
+; Directory for timeseries files - hardcoded for SEAC4RS
 tsdir = '/as/scratch/bmy/NRT/run.NA/timeseries/'
 tsfi1 = tsdir+'ts'+string(long(flightdates)-1, format='(i8.8)')+'.bpch'
 tsfi2 = tsdir+'ts'+flightdates+'.bpch'
@@ -446,11 +476,16 @@ tvcurtain, curtain, lat, lon, zmid, /ystyle, color = 1, $
            mindata=mmindata, maxdata=mmaxdata, ytitle=ytitle, title=title,$
 	   /FlightTrack, FlightZ=altp, /CBar,/CBVertical,/NoAdvance
  
-; If the OPlot_data keyword is set, then plot the DC8 data atop the
-; curtain.
-if Keyword_set(oplot_data) then $
+; If the OPlot_data keyword is set, then plot the DC8 data atop the curtain
+if Keyword_set(oplot_data) then begin
+if keyword_set(outline) then begin
+   plotsym,0,thick=2
+   scatterplot_datacolor, findgen(nPts)+1, altp, species, $
+      zmin=mindata,zmax=maxdata,/overplot,/nocb,          $
+      color=!myct.black,psym=8,symsize=1.2,_extra=_extra
+endif
    scatterplot_datacolor,findgen(nPts)+1,altp,species, $
-   zmin=mindata,zmax=maxdata,/overplot,/nocb,_extra=_extra
+      zmin=mindata,zmax=maxdata,/overplot,/nocb,symsize=1.0,_extra=_extra
+endif
  
-no_mod:
 end
