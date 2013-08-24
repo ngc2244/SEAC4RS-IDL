@@ -37,7 +37,7 @@ PRO seac4rs_model_merge, sourceDir, destDir, avgTime=avgTime, GridType=GridType
    ; Dates on which DC8 flew (or started flying if airborne at 00 GMT)
    ; Replace DD with real date in the future.
    DC8_flightdates = [ 20130806, 20130808, 20130812, 20130814, $ 
-   		       20130816, 20130819];, 201308DD, 201308DD, $
+   		       20130816, 20130819, 20130821];, 201308DD, $
    ;                   201308DD, 20130826, 201308DD, 201308DD, $
    ;                   201309DD, 20130905, 201309DD, 201308DD, $
    ;                   201309DD, 20130913, 201309DD, 201309DD ]
@@ -52,8 +52,8 @@ PRO seac4rs_model_merge, sourceDir, destDir, avgTime=avgTime, GridType=GridType
    ; 00 GMT and another began later in the day, this will ignore data
    ; before the takeoff time on the takeoff day. This can be 00 GMT on
    ; days with only one flight.
-   DC8_TakeoffTime = [ 1700,     1600,     0000,     0000,      $
-   		       0000,     0000];,     0000,     0000,      $
+   DC8_TakeoffTime = [ 0000,     0000,     0000,     0000,      $
+   		       0000,     0000,     0000];,     0000,      $
    ;                   0000,     0000,     0000,     0000,      $
    ;                   0000,     0000,     0000,     0000,      $
    ;                   0000,     0000,     0000,     0000 ]
@@ -61,7 +61,7 @@ PRO seac4rs_model_merge, sourceDir, destDir, avgTime=avgTime, GridType=GridType
    ; Landing time (GMT) on last day of flight, can be 2400 on days
    ; with only one flight
    DC8_LandingTime = [ 0300,     0100,     2400,     2400,      $ 
-                       2400,     2400];,     2400,     2400,      $
+                       2400,     2400,     2400];,     2400,      $
    ;                   2400,     2400,     2400,     2400,      $
    ;                   2400,     2400,     2400,     2400,      $
    ;                   2400,     2400,     2400,     2400 ]
@@ -73,7 +73,7 @@ PRO seac4rs_model_merge, sourceDir, destDir, avgTime=avgTime, GridType=GridType
    ; Dates on which ER2 flew (or started flying if airborne at 00 GMT)
    ; Replace DD with real date in the future.
    ER2_flightdates = [ 20130806, 20130808, 20130812, 20130814, $
-   		       20130816, 20130819];, 201308DD, 201308DD, $
+   		       20130816, 20130819, 20130821];, 201308DD, $
    ;                   201308DD, 20130826, 201308DD, 201308DD, $
    ;                   201309DD, 20130905, 201309DD, 201308DD, $
    ;                   201309DD, 20130913, 201309DD, 201309DD ]
@@ -88,8 +88,8 @@ PRO seac4rs_model_merge, sourceDir, destDir, avgTime=avgTime, GridType=GridType
    ; 00 GMT and another began later in the day, this will ignore data
    ; before the takeoff time on the takeoff day. This can be 00 GMT on
    ; days with only one flight.
-   ER2_TakeoffTime = [ 1700,     1600,     0000,     0000,     $
-   		       0000,     0000];,     0000,     0000,     $
+   ER2_TakeoffTime = [ 0000,     0000,     0000,     0000,     $
+   		       0000,     0000,     0000];,     0000,     $
    ;                   0000,     0000,     0000,     0000,     $
    ;                   0000,     0000,     0000,     0000,     $
    ;                   0000,     0000,     0000,     0000 ]
@@ -97,7 +97,7 @@ PRO seac4rs_model_merge, sourceDir, destDir, avgTime=avgTime, GridType=GridType
    ; Landing time (GMT) on last day of flight, can be 2400 on days
    ; with only one flight
    ER2_LandingTime = [ 0300,     2400,     2400,     2400,      $
-                       2400,     2400];,     2400,     2400,      $
+                       2400,     2400,     2400];,     2400,      $
    ;                   2400,     2400,     2400,     2400,      $
    ;                   2400,     2400,     2400,     2400,      $
    ;                   2400,     2400,     2400,     2400 ]
