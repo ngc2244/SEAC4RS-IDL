@@ -61,7 +61,8 @@
 pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 		    mindata=mindata,maxdata=maxdata, unit=unit,region=region,$
 		    limit=limit,oplot_data=oplot_data,save=save,fscale=fscale,$
-		    mspecies=mspecies,outline=outline,_extra=_extra
+		    diagn=diagn,mspecies=mspecies,outline=outline,tracer=tracer,$
+		    _extra=_extra
 
    ; Set defaults
    if n_elements(species_in)  eq 0 then species_in='CO'
@@ -74,6 +75,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    endif
    if n_elements(alts) eq 0 then alts=[0,12]
    if n_elements(fscale) eq 0 then fscale=1
+   if n_elements(DiagN) eq 0 then DiagN='IJ-AVG-$'
 
    if n_elements(region) gt 0 and n_elements(limit) gt 0 then begin
      print,'Specify region or limit but not both!'
@@ -124,6 +126,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    endif
    
    ; Pick tracer using names from tracerinfo.dat
+   if ( DiagN eq 'IJ-AVG-$' ) then begin
    TracerN = indgen(80)+1 ; 80 tracers hardwired for SEAC4RS
    tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
    ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
@@ -143,43 +146,46 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPI') )] else $
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(mspecies) )]
 
-   ; Read model fields
-   ctm_get_data,  DataInfo, 'IJ-AVG-$', filename=file,  tracer=tracer
-   Species_Mod = *(DataInfo.Data) * fscale
-
    ; Error catch for species not found (where returned -1 which gave tracer 80)
    if ( Tracer eq 80 and strupcase(mspecies) ne 'BGSOA' ) then begin
 	print,'Species not found in tracerinfo.dat'
 	return
    endif
+   endif
    
+   ; Read model fields
+   ctm_get_data,  DataInfo, DiagN, filename=file,  tracer=tracer
+   Species_Mod = *(DataInfo.Data) * fscale
+
 
    ; Special cases
+   if ( DiagN eq 'IJ-AVG-$' ) then begin
    if (strupcase(mspecies) eq 'MVK_MAC') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MACR') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
    endif else if (strupcase(mspecies) eq 'BC') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BCPO') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
    endif else if (strupcase(mspecies) eq 'POA') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPO') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
    endif else if (strupcase(mspecies) eq 'OA') then begin
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('OCPO') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('ASOA') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BBSOA') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
       Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('BGSOA') )]
-      ctm_get_data,  DataInfo2, 'IJ-AVG-$', filename=file,  tracer=tracer
+      ctm_get_data,  DataInfo2, DiagN, filename=file,  tracer=tracer
       Species_Mod = Species_Mod + *(DataInfo2.Data) * fscale
+   endif
    endif
 
    ; Get grid information
@@ -198,6 +204,15 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    Species_Mod = Species_Mod[*,*,ZInd] else $
    Species_Mod = mean(Species_Mod[*,*,ZInd],3)
 
+   if n_elements(unit) eq 0 then unit=''
+
+   ; Kludge to plot emissions
+   if max(species_mod) gt 1d4 then begin
+      power=floor(alog10(max(species_mod)))
+      species_mod=species_mod*(10d0^(-1*power))
+      unit='10!U'+string(power,'(i2)')+'!N '+unit
+   endif
+
    ; Set plot parameters
    if n_elements(mindata) eq 0 then mindata=min(Species_Mod)
    if n_elements(maxdata) eq 0 then maxdata=max(Species_Mod)
@@ -206,9 +221,8 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    Title=strupcase(species_in)+', '+string(min(alts),'(f4.1)')+' - '+$
          string(max(alts),'(f4.1)')+' km, '+flightdates
 
-   if ( maxdata/10. gt 5 ) then cbformat='(i)' else $
-      cbformat='(f4.1)'
-   if n_elements(unit) eq 0 then unit=''
+   if ( maxdata/10. lt 5 ) then cbformat='(f4.1)' else $
+      cbformat='(i)'
 
 ; Fix this later (jaf, 8/9/13)
 ;   if keyword_set(save) then begin
@@ -225,7 +239,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
           /isotropic, /USA, limit=limit, $
           /fcontour, /continents, /noadvance, title=title,       $
   	  cbunit=unit,/cbar, c_levels=indgen(20)*dcolor+mindata, $
-          cbformat=cbformat,_extra=_extra
+          cbformat=cbformat,div=5,_extra=_extra
 
    ; If needed, read and plot observations during flight
    if Keyword_Set(oplot_data) then begin
