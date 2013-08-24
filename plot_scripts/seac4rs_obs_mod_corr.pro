@@ -1,7 +1,7 @@
 pro seac4rs_obs_mod_corr,species_in,platform,flightdates=flightdates,$
 	z1=z1,z2=z2,minz1=minz1,maxz1=maxz1,minz2=minz2,maxz2=maxz2, $
 	mindata=mindata,maxdata=maxdata,unit=unit,altrange=altrange, $
-	_extra=_extra
+	model=model,halign=halign,valign=valign,_extra=_extra
 
 ; Set defaults
 if n_elements(species_in) eq 0 then species_in='CO'
@@ -59,9 +59,16 @@ for i = 0, n_elements(flightdates)-1 do begin
                                    _extra = _extra )]
 
    if (z1 eq 'alt' or z1 eq 'altp') then z1_data=alt else $
+   if (keyword_set(model)) then $
+   z1_data = [z1_data,get_model_data_seac4rs(z1,platform,flightdates[i], $
+                                    _extra = _extra )] $
+   else $
    z1_data = [z1_data,get_field_data_seac4rs(z1,platform,flightdates[i], $
                                     _extra = _extra )]
-   if (keyword_set(plot_z2)) then $
+   if (keyword_set(plot_z2) and keyword_set(model)) then $
+   z2_data = [z2_data,get_model_data_seac4rs(z2,platform,flightdates[i], $
+                                    _extra = _extra )] $
+   else if (keyword_set(plot_z2)) then $
    z2_data = [z2_data,get_field_data_seac4rs(z2,platform,flightdates[i], $
                                     _extra = _extra )]
    ; Read relevant model variables
@@ -88,6 +95,10 @@ if (keyword_set(plot_z2)) then z2_data=z2_data[1:*]
 
 ; Interpolate model to observed space
 species_mod = interpol( species_mod, doy_mod, doy )
+if (keyword_set(model)) then begin
+   z1_data = interpol( z1_data, doy_mod, doy )
+   z2_data = interpol( z2_data, doy_mod, doy )
+endif
 
 ; Get only relevant altitude points
 ind = where(alt ge min(altrange) and alt le max(altrange))
@@ -109,6 +120,11 @@ if (n_elements(maxdata) eq 0) then maxdata=max([species,species_mod],/nan)
 if (n_elements(minz1) eq 0) then minz1=min(z1_data,/nan)
 if (n_elements(maxz1) eq 0) then maxz1=max(z1_data,/nan)
 
+; Set up colorbar position
+if n_elements(halign) eq 0 then halign=0.6
+if n_elements(valign) eq 0 then valign=0.9
+cbposition=[halign,valign,halign+.2,valign+.03]
+
 ; Plot correlations
 myct, 33, ncolors=30
 
@@ -118,7 +134,7 @@ scatterplot_datacolor, species, species_mod, z1_data,   $
     /xstyle, /ystyle, xtitle=xtitle,ytitle=ytitle,      $
     xrange=[mindata,maxdata], yrange=[mindata,maxdata], $
     unit=z1title, zmin=minz1, zmax=maxz1, title=title,  $
-    div=3,cbposition=[.6,.9,.8,.93]
+    div=3,cbposition=cbposition
 oplot,[mindata,maxdata],[mindata,maxdata],color=1,linestyle=0
 
 if (keyword_set(plot_z2)) then begin
@@ -131,7 +147,7 @@ if (keyword_set(plot_z2)) then begin
        /xstyle, /ystyle, xtitle=xtitle,ytitle=ytitle,      $
        xrange=[mindata,maxdata], yrange=[mindata,maxdata], $
        unit=z2title, zmin=minz2, zmax=maxz2, title=title,  $
-       div=3,cbposition=[.6,.9,.8,.93]
+       div=3,cbposition=cbposition
    oplot,[mindata,maxdata],[mindata,maxdata],color=1,linestyle=0
 endif
 
