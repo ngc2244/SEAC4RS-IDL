@@ -1,0 +1,312 @@
+; $Id$
+;-----------------------------------------------------------------------
+;+
+; NAME:
+;        SEAC4RS_3_PROFILES
+;
+; PURPOSE:
+;	 Plot average vertical profiles for observations during SEAC4RS
+;	 along with GEOS-Chem averaged along SEAC4RS flight tracks
+;
+; CATEGORY:
+;
+; CALLING SEQUENCE:
+;        SEAC4RS_3_PROFILES, SPECIES, PLATFORM[, KEYWORDS]
+;
+; INPUTS:
+;	 SPECIES     - species to plot (default 'CO')
+;	 PLATFORM    - aircraft platform (default 'DC8')
+;
+; KEYWORD PARAMETERS:
+;        FLIGHTDATES - one or multiple flight dates (default all)
+;        MINDATA     - minimum value for x-axis (called with MAXDATA)
+;        MAXDATA     - maximum value for x-axis (called with MINDATA)
+;        UNIT        - unit for x-axis label
+;        CHOOSE_WIN  - used to plot in an IDL window besides 0
+;	 LATRANGE    - specifies min,max of latitude values to include
+;	 LONRANGE    - specifies min,max of lonitude values to include
+;        SAVE        - set this keyword to save figure
+;
+; OUTPUTS:
+;	 NONE
+;
+; SUBROUTINES:
+;	 Various SEAC4RS, GAMAP scripts
+;
+; REQUIREMENTS:
+;	 Various SEAC4RS, GAMAP scripts
+;
+; NOTES:
+;
+; EXAMPLE:
+;        seac4rs_3_profiles,'CO','DC8',flightdates='2013*'
+;
+; MODIFICATION HISTORY:
+;        jaf, 09 Aug 2013: VERSION 1.00
+;
+;-
+; Copyright (C) 2013, Jenny Fisher, University of Wollongong
+; This software is provided as is without any warranty whatsoever.
+; It may be freely used, copied or distributed for non-commercial
+; purposes.  This copyright notice must be kept with any copy of
+; this software. If this software shall be used commercially or
+; sold as part of a larger package, please contact the author.
+; Bugs and comments should be directed to jennyf@uow.edu.au
+; with subject "IDL routine seac4rs_3_profiles"
+;-----------------------------------------------------------------------
+
+pro seac4rs_3_profiles,species_in,species3_in,type3,platform,flightdates=flightdates,$
+	mindata=mindata,maxdata=maxdata,unit=unit,choose_win=choose_win, $
+	latrange=latrange,lonrange=lonrange,altrange=altrange,save=save, $
+	_extra=_extra
+ 
+; Set defaults
+if n_elements(species_in) eq 0 then species_in='so4'
+if n_elements(platform) eq 0 then platform = 'DC8'
+if N_Elements(flightdates) eq 0 then begin
+        flightdates='2013*'
+        print, $
+	'You didn''t specify flightdates, so all dates are being plotted!'
+	flightdates=get_model_data_seac4rs('FLIGHTDATE',platform,flightdates)
+	flightdates = flightdates(uniq(flightdates))
+	flightdates = string(flightdates, '(i8.8)')
+endif
+if n_elements(altrange) eq 0 then altrange=[0,12]
+if (type3 ne 'field' and type3 ne 'model') then begin
+   print,'Must specify if 3rd profile is field or model'
+   return
+endif
+ 
+; Initialize arrays
+species=[0]
+altp=[0]
+lat=[0]
+lon=[0]
+doy=[0]
+species3=[0]
+species_mod=[0]
+doy_mod=[0]
+ 
+; Read data
+for i = 0, n_elements(flightdates)-1 do begin
+   species_tmp = get_field_data_seac4rs(species_in,platform,flightdates[i], $
+                                      _extra = _extra)
+ 
+   ; Make sure there are observations for given species / flight
+   if  finite(mean_nan(species_tmp),/nan) then begin 
+	print, '********* no data for: ', flightdates[i]
+	goto, nodata
+   endif
+ 
+   ; Read data, other relevant variables
+   species = [species, species_tmp]
+
+   if ( type3 eq 'field' ) then $
+      species3 = get_field_data_seac4rs(species3_in,platform,flightdates[i], $
+                                    _extra = _extra ) $
+   else $
+      species3 = get_model_data_seac4rs(species3_in,platform,flightdates[i], $
+                                    _extra = _extra )
+ 
+   ; Allow use of alt if altp undefined
+   alt_tmp = get_field_data_seac4rs('altp',platform,flightdates[i], $
+                                    _extra = _extra )
+   if ~finite(mean_nan(alt_tmp),/nan) then altp = [altp,alt_tmp] $
+   else altp =  [altp,get_field_data_seac4rs('alt',platform,flightdates[i], $
+                                    _extra = _extra)]
+   
+   lat =  [lat,get_field_data_seac4rs('lat',platform,flightdates[i], $
+                                    _extra = _extra)]
+   lon =  [lon,get_field_data_seac4rs('lon',platform,flightdates[i], $
+                                    _extra = _extra)]
+   doy =  [doy,get_field_data_seac4rs('doy',platform,flightdates[i], $
+                                   _extra = _extra )]
+ 
+   ; Read relevant model variables
+   species_mod = [species_mod, $
+	get_model_data_seac4rs(species_in,platform,flightdates[i], $
+                             _extra = _extra)]
+   doy_mod = [doy_mod, $
+	get_model_data_seac4rs('DOY',platform,flightdates[i], $
+                            _extra = _extra )]
+ 
+nodata:
+endfor
+ 
+; Remove placeholder
+species  = species[1:*]
+species3  = species3[1:*]
+altp = altp[1:*]
+lat  = lat[1:*]
+lon  = lon[1:*]
+doy  = doy[1:*]
+species_mod = species_mod[1:*]
+doy_mod = doy_mod[1:*]
+ 
+; Interpolate model to observed space
+species_mod = interpol( species_mod, doy_mod, doy )
+if ( type3 eq 'model' ) then $
+   species3 = interpol( species3, doy_mod, doy )
+
+; Convert lon to -180 to 180
+lon[where(lon gt 180)] = lon[where(lon gt 180)]-360
+ 
+; Subselect relevant region, finite data
+if ( n_elements(lonrange) gt 0 and n_elements(latrange) gt 0 ) then begin
+   index = where( finite(species) and finite(species3)            and $
+		  (lat ge min(latrange) and lat le max(latrange)) and $
+		  (altp ge min(altrange) and altp le max(altrange)) and $
+		  (lon ge min(lonrange) and lon le max(lonrange))     )
+endif else if ( n_elements(lonrange) gt 0 ) then begin
+   index = where( finite(species) and finite(species3)            and $
+		  (altp ge min(altrange) and altp le max(altrange)) and $
+		  (lon ge min(lonrange) and lon le max(lonrange))     )
+endif else if ( n_elements(latrange) gt 0 ) then begin
+   index = where( finite(species) and finite(species3)            and $
+		  (altp ge min(altrange) and altp le max(altrange)) and $
+		  (lat ge min(latrange) and lat le max(latrange))     )
+endif else index = where( finite(species) and finite(species3)            and $
+		  (altp ge min(altrange) and altp le max(altrange)) )
+ 
+; Return if no valid data in range
+if (index[0] lt 0) then begin
+   Print,'No valid data for this species / alt / lat / lon combo'
+   Return
+endif
+
+; Subset data
+species = species[index]
+species3 = species3[index]
+species_mod = species_mod[index]
+altp = altp[index]
+lat = lat[index]
+lon = lon[index]
+ 
+; From CDH:
+; Add this later? (jaf, 8/8/13)
+;; Read ground elevation
+;restore, !HOME +'/data/smith_sandwell_topo_v8_2.sav', /verbose
+;jj = value_locate( topo.lat, lat )
+;ii = value_locate( topo.lon, lon )
+;altp = altp - (topo.alt[ii,jj] > 0)/1000.
+ 
+; Find the nearest integer altitude (km)
+; Restrict the range 0 < alt < 12km
+alt_group     = ( ( floor(altp) < 12 ) > 0 )
+ 
+; Find the median of each species for each altitude bin
+species_median   = tapply( species,  alt_group, 'median', /NaN )
+species3_median   = tapply( species3,  alt_group, 'median', /NaN )
+altp_median  = tapply( altp, alt_group, 'median', /NaN )
+
+; We can use the same group IDs for the model because they are
+; already interpolated to the same time and location 
+species_mod_median   = tapply( species_mod,  alt_group, 'median', /NaN )
+ 
+; Also get interquartile range
+species_25 = tapply( species, alt_group, 'percentiles', /Nan, value=0.25 )
+species_75 = tapply( species, alt_group, 'percentiles', /Nan, value=0.75 )
+species3_25 = tapply( species3, alt_group, 'percentiles', /Nan, value=0.25 )
+species3_75 = tapply( species3, alt_group, 'percentiles', /Nan, value=0.75 )
+species_mod_25 = tapply( species_mod, alt_group, 'percentiles', /Nan, value=0.25 )
+species_mod_75 = tapply( species_mod, alt_group, 'percentiles', /Nan, value=0.75 )
+ 
+; Set plot strings
+title = 'Observed and modeled vertical profiles of '+species_in
+ytitle='Altitude, km'
+if n_elements(unit) eq 0 then unit = ''
+xtitle=strupcase(species_in)+', '+unit
+
+; Set up plot, full dynamic range
+if Keyword_set(save) then begin
+   filename=!SEAC4RS+'/IDL/plots/'+platform+'_'+species_in+'_profiles_full.ps'
+   multipanel,rows=2,cols=1
+   open_device, /ps, filename=filename, Bits=8, WinParam = [0, 300, 400], $
+                /color, /portrait
+   !p.font = 0
+endif else if n_elements(choose_win) eq 0 then window,0 else window,choose_win
+
+; Plot individual data points
+plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,ceil(altrange[1])],ystyle=9,$
+	xtitle=xtitle,ytitle=ytitle,title=title,xstyle=9,/nodata
+;oplot, species3, altp,color=4,psym=sym(1),symsize=0.2
+;oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
+
+; Plot IQR as error bars
+for i = 0, n_elements(species_mod_25)-1 do begin
+   oplot,[species_mod_25[i],species_mod_75[i]],$
+          [altp_median[i],altp_median[i]],color=2,linestyle=0,thick=2
+endfor
+for i = 0, n_elements(species_25)-1 do begin
+   oplot,[species_25[i],species_75[i]],$
+          [altp_median[i]+.05,altp_median[i]+.05],color=1,linestyle=0,thick=2
+endfor
+for i = 0, n_elements(species3_25)-1 do begin
+   oplot,[species3_25[i],species3_75[i]],$
+          [altp_median[i]-0.05,altp_median[i]-0.05],color=4,linestyle=0,thick=2
+endfor
+
+; Plot median values in each altitude bin
+oplot, species_median,altp_median+0.05,color=1,linestyle=0,thick=2
+oplot, species3_median,altp_median-0.05,color=4,linestyle=0,thick=2
+oplot, species_mod_median,altp_median,color=2,linestyle=0,thick=2
+ 
+; Legend
+legend, lcolor=[2,1,4],line=[0,0,0],lthick=[2,2,2],$
+	label=['Model',strupcase(species_in),strupcase(species3_in)],$
+	halign=0.9, valign=0.9, charsize=1.2, /color
+ 
+multipanel,/off
+if Keyword_Set(save) then close_device
+
+; Set up plot, limited range
+if ( n_elements(mindata) gt 0 or n_elements(maxdata) gt 0 ) then begin
+  if Keyword_set(save) then begin
+     filename=!SEAC4RS+'/IDL/plots/'+platform+'_'+species_in+'_profiles.ps'
+     multipanel,rows=2,cols=1
+     open_device, /ps, filename=filename, Bits=8, WinParam = [0, 300, 400], $
+                  /color, /portrait
+     !p.font = 0
+endif else if n_elements(choose_win) eq 0 then window,1 else window,choose_win
+
+if n_elements(mindata) eq 0 then mindata=min([species,species3,species_mod])
+if n_elements(maxdata) eq 0 then maxdata=max([species,species3,species_mod])
+
+; Plot individual data points
+plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,ceil(altrange[1])],ystyle=9,$
+	xrange=[mindata, maxdata], xstyle=9, xtitle=xtitle,$
+	ytitle=ytitle,title=title,/nodata
+;oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
+;oplot, species3, altp,color=4,psym=sym(1),symsize=0.2
+
+; Plot individual data points
+for i = 0, n_elements(species_mod_25)-1 do begin
+   oplot,[species_mod_25[i],species_mod_75[i]],$
+          [altp_median[i],altp_median[i]],color=2,linestyle=0,thick=2
+endfor
+for i = 0, n_elements(species_25)-1 do begin
+   oplot,[species_25[i],species_75[i]],$
+          [altp_median[i]+.05,altp_median[i]+.05],color=1,linestyle=0,thick=2
+endfor
+for i = 0, n_elements(species3_25)-1 do begin
+   oplot,[species3_25[i],species3_75[i]],$
+          [altp_median[i]-.05,altp_median[i]-.05],color=4,linestyle=0,thick=2
+endfor
+
+; Plot median values in each altitude bin
+oplot, species_median,altp_median,color=1,linestyle=0,thick=2
+oplot, species3_median,altp_median,color=4,linestyle=0,thick=2
+oplot, species_mod_median,altp_median+.05,color=2,linestyle=0,thick=2
+ 
+; Legend
+legend, lcolor=[2,1,4],line=[0,0,0],lthick=[2,2,2],$
+	label=['Model',strupcase(species_in),strupcase(species3_in)],$
+	halign=0.9, valign=0.9, charsize=1.2, /color
+ 
+multipanel,/off
+if Keyword_Set(save) then close_device
+ 
+endif
+ 
+stop
+end
