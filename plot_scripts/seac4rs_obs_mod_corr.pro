@@ -1,7 +1,8 @@
 pro seac4rs_obs_mod_corr,species_in,platform,flightdates=flightdates,$
 	z1=z1,z2=z2,minz1=minz1,maxz1=maxz1,minz2=minz2,maxz2=maxz2, $
 	mindata=mindata,maxdata=maxdata,unit=unit,altrange=altrange, $
-	model=model,halign=halign,valign=valign,_extra=_extra
+	model=model,halign=halign,valign=valign,latrange=latrange,   $
+	lonrange=lonrange,_extra=_extra
 
 ; Set defaults
 if n_elements(species_in) eq 0 then species_in='CO'
@@ -100,12 +101,30 @@ if (keyword_set(model)) then begin
    z2_data = interpol( z2_data, doy_mod, doy )
 endif
 
-; Get only relevant altitude points
-ind = where(alt ge min(altrange) and alt le max(altrange))
-species=species[ind]
-species_mod=species_mod[ind]
-z1_data=z1_data[ind]
-if (keyword_set(plot_z2)) then z2_data=z2_data[ind]
+; Convert lon to -180 to 180
+lon[where(lon gt 180)] = lon[where(lon gt 180)]-360
+ 
+; Subselect relevant region, finite data
+if ( n_elements(lonrange) gt 0 and n_elements(latrange) gt 0 ) then begin
+   index = where( finite(species)                                 and $
+                  (lat ge min(latrange) and lat le max(latrange)) and $
+                  (alt ge min(altrange) and alt le max(altrange)) and $
+                  (lon ge min(lonrange) and lon le max(lonrange))     )   
+endif else if ( n_elements(lonrange) gt 0 ) then begin
+   index = where( finite(species)                                 and $
+                  (alt ge min(altrange) and alt le max(altrange)) and $
+                  (lon ge min(lonrange) and lon le max(lonrange))     )   
+endif else if ( n_elements(latrange) gt 0 ) then begin
+   index = where( finite(species)                                 and $
+                  (alt ge min(altrange) and alt le max(altrange)) and $
+                  (lat ge min(latrange) and lat le max(latrange))     )   
+endif else index = where(finite(species) and $
+                  (alt ge min(altrange) and alt le max(altrange)) )
+
+species=species[index]
+species_mod=species_mod[index]
+z1_data=z1_data[index]
+if (keyword_set(plot_z2)) then z2_data=z2_data[index]
 
 ; Set plot strings
 title = 'Correlation of Observed and modeled '+strupcase(species_in)
@@ -128,7 +147,7 @@ cbposition=[halign,valign,halign+.2,valign+.03]
 ; Plot correlations
 myct, 33, ncolors=30
 
-window,0
+window,0,xsize=600,ysize=450
 
 scatterplot_datacolor, species, species_mod, z1_data,   $
     /xstyle, /ystyle, xtitle=xtitle,ytitle=ytitle,      $
