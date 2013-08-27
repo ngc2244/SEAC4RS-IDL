@@ -122,8 +122,12 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
     'so2'    : field = 'so2_gtcims'
     'isop'   : field = 'isoprene'
     'bc'     : field = 'BC_mass_90to550nm_HDSP2'
-    ; SAGA is default for now (more data available)
+    ; SAGA MC is default for sulfate (more accurate)
+    ; AMS (scaled) is default for other aerosols
     'so4'    : field = 'saga_so4'
+    'nh4'    : field = 'ams_nh4'
+    'nit'    : field = 'ams_no3'
+    'no3'    : field = 'ams_no3'
     'hno3_no3': field = 'hno3_no3_lt1um_saga'
   else:
   endcase
@@ -163,15 +167,14 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt for addition to SO2 in pptv
       data = so2 + saga_so4 / (96d-3 * ( 1.29 / 28.97 ))
   
-  ;    if (keyword_set(nss)) then begin
-  ;       s = 'sodium = ' + Platform + '.Na'
-  ;       status = Execute( s )
-  ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then fine_aerosol_sulfate[ind]=!Values.f_nan
-  ;       ; seasalt component is 0.252*sodium
-  ;       fine_aerosol_sulfate = fine_aerosol_sulfate - $
-  ;                  (23./96.) * 0.252 * sodium
-  ;    endif
+      if (keyword_set(nss)) then begin
+         s = 'sodium = ' + Platform + '.Na'
+         status = Execute( s )
+         ind = where(~finite(sodium))
+         if ind[0] ge 0 then saga_so4[ind]=!Values.f_nan
+         ; seasalt component is 0.252*sodium (mass ratio)
+         saga_so4 = saga_so4 - 0.252 * sodium
+      endif
 
   ; Special Case for SAGA sulfate < 1um
   endif else If field eq 'saga_so4' then begin
@@ -182,20 +185,95 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       s = 'so4 = ' + Platform + '.sulfate_lt1um_SAGA'
       status = Execute( s )  
   
-  ;    if (keyword_set(nss)) then begin
-  ;       s = 'sodium = ' + Platform + '.Na'
-  ;       status = Execute( s )
-  ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then so4[ind]=!Values.f_nan
-  ;       ; seasalt component is 0.252*sodium
-  ;       so4 = so4 - $
-  ;                  (23./96.) * 0.252 * sodium
-  ;    endif
-  ;
+      if (keyword_set(nss)) then begin
+         s = 'sodium = ' + Platform + '.Na'
+         status = Execute( s )
+         ind = where(~finite(sodium))
+         if ind[0] ge 0 then so4[ind]=!Values.f_nan
+         ; seasalt component is 0.252*sodium (mass ratio)
+         so4 = so4 - 0.252 * sodium
+      endif
+  
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
       else data = so4
+
+  ; Special Case for SAGA bulk SOx
+  endif else If field eq 'bulk_sox' then begin
+  
+      Print, 'Reading fields for SAGA bulk SOx from file: '+file+' ...'
+  
+      ; Read the SO2
+      s = 'so2 = ' + Platform + '.so2_gtcims' 
+      status = Execute( s )  
+ 
+      ; Read the time UTC
+      s = 'so4 = ' + Platform + '.SO4_SAGA_AERO'
+      status = Execute( s )  
+  
+      if (keyword_set(nss)) then begin
+         s = 'sodium = ' + Platform + '.Na_SAGA_AERO'
+         status = Execute( s )
+         ind = where(~finite(sodium))
+         if ind[0] ge 0 then so4[ind]=!Values.f_nan
+         ; seasalt component is 0.252*sodium (mass ratio)
+         so4 = so4 - 0.252 * sodium
+      endif
+  
+      ; Convert units from ug/m3 to ppt
+      data = so2 + so4 / (96d-3 * ( 1.29 / 28.97 ) )
+
+  ; Special Case for SAGA bulk sulfate
+  endif else If field eq 'bulk_so4' then begin
+  
+      Print, 'Reading fields for SAGA bulk SO4 from file: '+file+' ...'
+  
+      ; Read the time UTC
+      s = 'so4 = ' + Platform + '.SO4_SAGA_AERO'
+      status = Execute( s )  
+  
+      if (keyword_set(nss)) then begin
+         s = 'sodium = ' + Platform + '.Na_SAGA_AERO'
+         status = Execute( s )
+         ind = where(~finite(sodium))
+         if ind[0] ge 0 then so4[ind]=!Values.f_nan
+         ; seasalt component is 0.252*sodium (mass ratio)
+         so4 = so4 - 0.252 * sodium
+      endif
+  
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
+      else data = so4
+
+  ; Special Case for SAGA bulk ammonium
+  endif else If field eq 'bulk_nh4' then begin
+  
+      Print, 'Reading fields for SAGA bulk NH4 from file: '+file+' ...'
+  
+      ; Read the time UTC
+      s = 'nh4 = ' + Platform + '.nh4_SAGA_AERO'
+      status = Execute( s )  
+  
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = nh4 / (18d-3 * ( 1.29 / 28.97 ) ) $
+      else data = nh4
+
+  ; Special Case for SAGA bulk nitrate
+  endif else If field eq 'bulk_no3' then begin
+  
+      Print, 'Reading fields for SAGA bulk NO3 from file: '+file+' ...'
+  
+      ; Read the time UTC
+      s = 'no3 = ' + Platform + '.no3_SAGA_AERO'
+      status = Execute( s )  
+  
+      ; Convert units from ug/m3 to ppt if needed
+      if ( keyword_set(ppt) ) then $
+      data = no3 / (62d-3 * ( 1.29 / 28.97 ) ) $
+      else data = no3
 
   ; Special Case for AMS SOx
   endif else If field eq 'ams_sox' then begin
@@ -210,16 +288,15 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       s = 'ams_so4 = ' + Platform + '.sulfate_lt_1um_AMS' 
       status = Execute( s )  
   
-  ;    if (keyword_set(nss)) then begin
-  ;       s = 'sodium = ' + Platform + '.Na'
-  ;       status = Execute( s )
-  ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then ams_so4[ind]=!Values.f_nan
-  ;       ; seasalt component is 0.252*sodium, but Na is in pptv
-  ;       ams_so4 = ams_so4 - $
-  ;                  0.252 * ( ( 23.*1.29) / 28.97 ) * 1d-3 * sodium
-  ;    endif
-  
+      if (keyword_set(nss)) then begin
+         s = 'sodium = ' + Platform + '.Na'
+         status = Execute( s )
+         ind = where(~finite(sodium))
+         if ind[0] ge 0 then ams_so4[ind]=!Values.f_nan
+         ; seasalt component is 0.252*sodium (mass ratio)
+         ams_so4 = ams_so4 - 0.252 * sodium
+      endif
+
       ; Convert units from ug/m3 to ppt for addition to SO2 in pptv
       data = so2 + ams_so4 / (96d-3 * ( 1.29 / 28.97 ))
  
@@ -232,15 +309,14 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   
       status = Execute( s )
   
-  ;    if (keyword_set(nss)) then begin
-  ;       s = 'sodium = ' + Platform + '.Na'
-  ;       status = Execute( s )
-  ;       ind = where(~finite(sodium))
-  ;       if ind[0] ge 0 then ams_so4[ind]=!Values.f_nan
-  ;       ; seasalt component is 0.252*sodium (MASS ratio), but Na is in pptv
-  ;       ams_so4 = ams_so4 - $
-  ;                  0.252 * ( ( 23.*1.29) / 28.97 ) * 1d-3 * sodium
-  ;    endif
+      if (keyword_set(nss)) then begin
+         s = 'sodium = ' + Platform + '.Na'
+         status = Execute( s )
+         ind = where(~finite(sodium))
+         if ind[0] ge 0 then ams_so4[ind]=!Values.f_nan
+         ; seasalt component is 0.252*sodium (mass ratio)
+         ams_so4 = ams_so4 - 0.252 * sodium
+      endif
   
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
@@ -248,7 +324,7 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       else data = ams_so4
 
   ; Special Case for AMS Ammonium (units of microgram/m3) 
-  endif else If field eq 'nh4' then begin
+  endif else If field eq 'ams_nh4' then begin
   
       Print, 'Reading fields for AMS NH4 from file: '+file+' ...'
   
@@ -262,7 +338,7 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       else data = ams_nh4
 
   ; Special Case for AMS Nitrate (units of microgram/m3) 
-  endif else If field eq 'nit' or field eq 'no3' then begin
+  endif else If field eq 'ams_no3' then begin
   
       Print, 'Reading fields for AMS NO3 from file: '+file+' ...'
   
@@ -318,6 +394,7 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
   
       status = Execute( s )
   
+      ; Convert units from ug/m3 to ppt if needed
       ; SEAC4RS AMS data are already in ug/m3
       ;;; Convert from ug C/m3 to ug/m3
       ;;Data = oa * 2.1
@@ -537,6 +614,29 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
     If (count ge 1 ) then $
       Data = Data[ind_troposphere]
  
+  endif
+
+  ;--------------------------------------------------------------
+  ; Kludge for problem with AMS inlet
+  ;
+  ;--------------------------------------------------------------
+  if ( strlowcase(field_in) eq 'ams_sox' or strlowcase(field_in) eq 'ams_so4' or $
+       strlowcase(field_in) eq 'ams_nh4' or strlowcase(field_in) eq 'ams_no3' or $
+       strlowcase(field_in) eq 'nit'     or strlowcase(field_in) eq 'no3'     or $
+       strlowcase(field_in) eq 'nh4'     or strlowcase(field_in) eq 'oa' ) then begin
+
+     print,'    ------'
+     print,'    AMS had problem with size cut-off in inlet. Data below 6km are being scaled'
+     print,'    ------'
+
+     ; Data above ~6km don't need scaling; data below ~6km are about 25-30% too low
+     alt = get_field_data_seac4rs( 'alt', Platform, Flightdates, $
+                                    avgtime=avgtime, minavg=minavg )
+
+     ind_LT = where( alt le 6.0, count )
+
+     if ( count ge 1 ) then Data[ind_LT] = Data[ind_LT]/0.7
+
   endif
  
   ;--------------------------------------------------------------
