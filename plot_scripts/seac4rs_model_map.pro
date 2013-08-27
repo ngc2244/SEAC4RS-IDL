@@ -62,7 +62,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 		    mindata=mindata,maxdata=maxdata, unit=unit,region=region,$
 		    limit=limit,oplot_data=oplot_data,save=save,fscale=fscale,$
 		    diagn=diagn,mspecies=mspecies,outline=outline,tracer=tracer,$
-		    _extra=_extra
+		    oplot_track=oplot_track,_extra=_extra
 
    ; Set defaults
    if n_elements(species_in)  eq 0 then species_in='CO'
@@ -207,7 +207,7 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
    if n_elements(unit) eq 0 then unit=''
 
    ; Kludge to plot emissions
-   if max(species_mod) gt 1d4 then begin
+   if max(species_mod) gt 1d5 then begin
       power=floor(alog10(max(species_mod)))
       species_mod=species_mod*(10d0^(-1*power))
       unit='10!U'+string(power,'(i2)')+'!N '+unit
@@ -276,7 +276,26 @@ pro seac4rs_model_map,species_in,platform,flightdates=flightdates,alts=alts, $
 
 
    nodata:
+   endif else if Keyword_Set(oplot_track) then begin
+      lat = get_model_data_seac4rs('lat',platform,flightdates,$
+                                  _extra=_extra)
+      lon = get_model_data_seac4rs('lon',platform,flightdates,$
+                                  _extra=_extra)
+      alt_data = get_model_data_seac4rs('alt',platform,flightdates,$
+                                  _extra=_extra)
+
+      ; Select data in the correct alt range
+      index = where( alt_data ge min(alts) and alt_data le max(alts) )
+      lat     = lat[index]
+      lon     = lon[index]
+
+      ; Add to map
+      scatterplot_datacolor,lon,lat,alt_data,/overplot,zmin=mindata,$
+         zmax=maxdata,/xstyle,/ystyle,/nocb,color=!myct.black,$
+	 psym=sym(1),symsize=0.8,_extra=_extra
    endif
+
+   
 
 ;   if keyword_set(save) then close_device
 

@@ -50,7 +50,8 @@
 ;-----------------------------------------------------------------------
 
 pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
-	maxdata=maxdata, diff=diff, limit=limit, outline=outline,_extra=_extra
+	maxdata=maxdata, diff=diff, limit=limit, outline=outline,$
+	cities=cities, _extra=_extra
 
   if n_elements(region) gt 0 and n_elements(limit) gt 0 then begin
      print,'Specify region or limit but not both!'
@@ -79,6 +80,19 @@ pro seac4rs_map, lon, lat, data, region=region, mindata=mindata, $
         /continents,/noadvance, _extra=_extra
  
   if keyword_set(diff) then myct,/diff,ncolors=30 else myct,33,ncolors=30
+
+  ; Overplot some city locations (e.g. Atlanta, Birmingham) since these were
+  ; plume targets for flights. Add more here as needed!
+  if keyword_set(cities) then begin
+
+     ; Atlanta, Birmingham
+     clat=[33.755,  33.525 ]
+     clon=[-84.390, -86.813]
+
+     oplot,clon,clat,psym=sym(4),color=5,symsize=2
+     oplot,clon,clat,psym=sym(9),color=1,symsize=2
+
+  endif
 
   ; Plot the data, coloring the points by value
   if keyword_set(outline) then begin

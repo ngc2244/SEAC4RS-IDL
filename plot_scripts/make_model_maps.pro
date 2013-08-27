@@ -50,7 +50,7 @@
 ; sold as part of a larger package, please contact the author.
 ;-----------------------------------------------------------------------
 
-pro make_model_maps,species,platform,flightdates=flightdates,_extra=_extra
+pro make_model_maps,species,platform,flightdates=flightdates,ppt=ppt,_extra=_extra
 
 ; Set defaults, and alert user to choices being made.
 ; Default is to plot CO observations from the WP3D for all dates 
@@ -89,14 +89,21 @@ CASE mspecies of
     end
     'SO4' : begin
 	MinData = 0
+        if keyword_set(ppt) then begin
+	MaxData = 1d3
+        fscale = 1d3
+	Unit = 'ppt'
+        endif else begin
 	MaxData = 1
         fscale = 96.*( 1.29 / 28.97 )
 	Unit = 'ug/m3'
+        endelse
     end
     'SO2' : begin
 	MinData = 0
-	MaxData = 1
-	Unit = 'ppbv'
+	MaxData = 1d3
+	fscale = 1d3
+	Unit = 'pptv'
     end
     'NO2' : begin
 	MinData = 0
@@ -133,10 +140,12 @@ ENDCASE
 if n_elements(mindata_in) ne 0 then mindata=mindata_in
 if n_elements(maxdata_in) ne 0 then maxdata=maxdata_in
 if ~keyword_set(oplot_data) then oplot_data=0
+if ~keyword_set(oplot_track) then oplot_track=0
 
 ; Plot the data over the US
 seac4rs_model_map,species,platform,flightdates=flightdates,mindata=mindata,$
                   maxdata=maxdata,unit=unit,oplot_data=oplot_data,       $
-		  fscale=fscale,mspecies=mspecies,_extra=_extra
+		  fscale=fscale,mspecies=mspecies,ppt=ppt,oplot_track=oplot_track,$
+		  _extra=_extra
  
 end
