@@ -114,29 +114,12 @@ if N_Elements(unit) eq 0 then unit = ''
 ; If model output is not available, this will be changed later.
 if (~keyword_set(obs_only)) then Obs_Only=0
 
-; Pick tracer using names from tracerinfo.dat
-if (n_elements(tracer) eq 0) then begin
-
-   ; 80 tracers hardwired for SEAC4RS
-   TracerN = indgen(80)+1 
-   tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
-   ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
-   TracerName = TracerStruct.name
-
-   ; Special case for MVK+MACR
-   if (strupcase(species_in) eq 'MVK_MAC') then $
-      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase('MVK') )] else $
-      Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
-
-   ; Check for no data (where gives -1 so tracer gives 80)
-   if ( Tracer eq 80 and strupcase(Species_In) ne 'BGSOA' ) then begin
-      print,'Species not found in tracerinfo.dat!'
-      return
-   endif
-
-endif
-
 ; Get observational data 
+; Special case for BGSOA; plot total OA over BGSOA
+if ( strupcase(Species_In) eq 'BGSOA' or strupcase(Species_In) eq 'SOA' ) then $
+   species = get_field_data_seac4rs('OA', platform, flightdates, /minavg, $
+                        _extra = _extra) else $
+
 species = $
   get_field_data_seac4rs(species_in, platform, flightdates, /minavg, $
                         _extra = _extra)
@@ -237,8 +220,8 @@ xtickname_lat = construct_map_labels( p_lat,/nodegree,/lat, format='(F5.1)')
 xtickname_lon = construct_map_labels( p_lon,/nodegree,/lon, format='(F5.1)')
 
 ; Set min and max values for data and model if none were specified.
-if (n_elements(mindata ) eq 0) then mindata  = min(species)
-if (n_elements(maxdata ) eq 0) then maxdata  = max(species)
+if (n_elements(mindata ) eq 0) then mindata  = min(species,/nan)
+if (n_elements(maxdata ) eq 0) then maxdata  = max(species,/nan)
 if (n_elements(mmindata) eq 0) then mmindata = mindata
 if (n_elements(mmaxdata) eq 0) then mmaxdata = maxdata
 
@@ -248,24 +231,26 @@ myct, 33, ncolors = 30
 multipanel, /off
 
 ; Plot flight data along flight track
+if strupcase(species_in) eq 'BGSOA' or strupcase(species_in) eq 'SOA' then $
+   oname = 'OA' else oname=strupcase(species_in)
 window, 0
 if keyword_set(outline) then begin
       plotsym,0,thick=2
       scatterplot_datacolor, findgen(nPts)+1, altp, species,       $
          /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',       $
          yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,$
-         title = 'Observed '+strupcase(Platform)+' '+              $
-         strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],     $
-         /nocb,color=!myct.black,psym=8,symsize=1.2,_extra=_extra
+         title = 'Observed '+strupcase(Platform)+' '+ oname,       $
+         CBposition=[0.15,0.85,.6,0.9],/nocb,color=!myct.black,    $
+         psym=8,symsize=1.2,_extra=_extra
      overplot=1
 endif else overplot=0
 
 scatterplot_datacolor, findgen(nPts)+1, altp, species, zmin=mindata,      $
       zmax=maxdata, /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',   $
       yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,          $
-      unit=unit, title = 'Observed '+strupcase(Platform)+' '+             $
-      strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],               $
-      overplot=overplot,symsize=1.0,_extra=_extra
+      unit=unit, title = 'Observed '+strupcase(Platform)+' '+  oname,     $
+      CBposition=[0.15,0.85,.6,0.9],overplot=overplot,symsize=1.0,        $
+      _extra=_extra
  
 ; Add longitude labels
 axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1, $
@@ -281,7 +266,7 @@ if keyword_set(outline) then begin
    scatterplot_datacolor, findgen(nPts)+1, altp, species_mod,   $
       /xstyle, /ystyle, ytitle = 'Pressure Altitude(km)',       $
       yrange = [0, ztop], xticks = 7, xtickname = xtickname_lat,$
-      title = 'Observed '+strupcase(Platform)+' '+              $
+      title = 'Modeled '+strupcase(Platform)+' '+              $
       strupcase(species_in), CBposition=[0.15,0.85,.6,0.9],     $
       /nocb,color=!myct.black,psym=8,symsize=1.2,_extra=_extra
 endif
@@ -302,13 +287,31 @@ axis, !x.window[0], /xaxis, /norm, xticks=7, xminor=1, color=1, $
 
 ; First check whether this species actually exists in the timeseries file
 ; This is hardcoded for SEAC4RS diagnostics
-if ( tracer ne 1  and tracer ne 2  and tracer ne 4  and tracer ne 6  and $
-     tracer ne 20 and tracer ne 26 and tracer ne 27 and tracer ne 64 and $
-     tracer ne 78 and tracer ne 79 and tracer ne 80 and tracer ne 91 and $
-     tracer ne 92 and tracer ne 93 and tracer ne 94 and tracer ne 95 and $
-     tracer ne 99 and tracer ne 100 ) then begin
-   print,'No timeseries data for this species!'
-   return
+; Pick tracer using names from tracerinfo.dat
+; Special case for SOA
+if (n_elements(tracer) eq 0 and strupcase(species_in) ne 'SOA') then begin
+
+   ; 80 tracers hardwired for SEAC4RS
+   TracerN = indgen(80)+1 
+   tracerinfo_file = !SEAC4RS+'/IDL/tracerinfo.dat'
+   ctm_tracerinfo, TracerN, TracerStruct, filename=tracerinfo_file
+   TracerName = TracerStruct.name
+
+   Tracer = TracerN[where( strlowcase(TracerName) eq strlowcase(species_in) )]
+
+   ; Check for no data (where gives -1 so tracer gives 80)
+   if ( Tracer eq 80 and strupcase(Species_In) ne 'BGSOA' ) then begin
+      print,'Species not found in tracerinfo.dat!'
+      return
+   endif else if ( tracer ne 1  and tracer ne 2  and tracer ne 4  and tracer ne 6  and $
+                   tracer ne 20 and tracer ne 26 and tracer ne 27 and tracer ne 64 and $
+                   tracer ne 78 and tracer ne 79 and tracer ne 80 and tracer ne 91 and $
+                   tracer ne 92 and tracer ne 93 and tracer ne 94 and tracer ne 95 and $
+                   tracer ne 99 and tracer ne 100 ) then begin
+      print,'No timeseries data for this species!'
+      return
+   endif
+
 endif
 
 ; Directory for timeseries files - hardcoded for SEAC4RS
@@ -370,6 +373,10 @@ if ( nDay1 ge 0 ) then begin
       ctm_get_data, datainfo3, DiagN, filename = tsfi1, tracer = 15
       ctm_get_data, datainfo4, DiagN, filename = tsfi1, tracer = 18
       ctm_get_data, datainfo5, DiagN, filename = tsfi1, tracer = 4
+   endif else if strupcase(species_in) eq 'SOA' then begin
+      ctm_get_data, datainfo,  DiagN, filename = tsfi1, tracer = 78
+      ctm_get_data, datainfo1, DiagN, filename = tsfi1, tracer = 79
+      ctm_get_data, datainfo2, DiagN, filename = tsfi1, tracer = 80
    endif else ctm_get_data, datainfo, DiagN, filename = tsfi1, tracer = tracer
    
    ; nBlks is the number of blocks (nominally, one for every time)
@@ -390,12 +397,15 @@ if ( nDay1 ge 0 ) then begin
        near_lat  = Min(Abs(lat_mod - Lat[i]), jj)
        near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
 
-       ; Special handling for AOD
-       if keyword_set(AOD) then begin
+       ; Special handling for AOD, SOA
+       if keyword_set(AOD) then $
           array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
                   *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
-                  *( datainfo4[j].data ) + *( datainfo5[j].data ) 
-       endif else $
+                  *( datainfo4[j].data ) + *( datainfo5[j].data )   $
+       else if strupcase(species_in) eq 'SOA' then $
+          array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
+                  *( datainfo2[j].data )                            $
+       else $
           array = *( datainfo[j].data  )
 
        ; Scale the array by fscale to get the units right
@@ -416,7 +426,7 @@ endif        ; "Previous" day
 ; Repeat the process for the "current" day
 if ( nDay2 ge 0 ) then begin
 
-   ; Special handling for AOD
+   ; Special handling for AOD, SOA
    if keyword_set(AOD) then begin
       DIAGN='OD-MAP-$'
       ctm_get_data, datainfo,  DiagN, filename = tsfi2, tracer = 6
@@ -425,6 +435,10 @@ if ( nDay2 ge 0 ) then begin
       ctm_get_data, datainfo3, DiagN, filename = tsfi2, tracer = 15
       ctm_get_data, datainfo4, DiagN, filename = tsfi2, tracer = 18
       ctm_get_data, datainfo5, DiagN, filename = tsfi2, tracer = 4
+   endif else if strupcase(species_in) eq 'SOA' then begin
+      ctm_get_data, datainfo,  DiagN, filename = tsfi1, tracer = 78
+      ctm_get_data, datainfo1, DiagN, filename = tsfi1, tracer = 79
+      ctm_get_data, datainfo2, DiagN, filename = tsfi1, tracer = 80
    endif else ctm_get_data, datainfo, DiagN, filename = tsfi2, tracer = tracer
 
    nBlks = n_elements(datainfo)
@@ -444,11 +458,14 @@ if ( nDay2 ge 0 ) then begin
       near_lon  = Min(Abs(lon_mod - Lon[i]), ii)
 
       ; Special handling for AOD
-      if keyword_set(AOD) then begin
+      if keyword_set(AOD) then $
          array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
                  *( datainfo2[j].data ) + *( datainfo3[j].data ) + $
-                 *( datainfo4[j].data ) + *( datainfo5[j].data )
-       endif else $
+                 *( datainfo4[j].data ) + *( datainfo5[j].data )   $
+       else if strupcase(species_in) eq 'SOA' then $
+          array = *( datainfo[j].data  ) + *( datainfo1[j].data ) + $
+                  *( datainfo2[j].data )                            $
+       else $
          array = *( datainfo[j].data  )
 
       ; Scale data by fscale
