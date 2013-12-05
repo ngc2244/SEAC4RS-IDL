@@ -9,7 +9,6 @@ This directory contains:
 
   get_er2.pro		: IDL scirpt to get ER-2 location and time,
 			: called by make_planeflight.pro, if necessary
-			: available soon.
 
   make_planeflight.pro	: Main script to make Planeflight files
 
