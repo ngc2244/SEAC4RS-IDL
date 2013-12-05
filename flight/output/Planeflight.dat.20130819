@@ -1,8 +1,8 @@
 Planeflight.dat -- Input file for ND40 diagnostic (GEOS-5/NRT-SEAC4RS runs)
 Lei Zhu
-14 Aug 2013
+03 Dec 2013
 -------------------------------------------------------------------------------
- 98       <-- # of variables to be output (list them below, one per line)
+ 112       <-- # of variables to be output (list them below, one per line)
 -------------------------------------------------------------------------------
 TRA_001
 TRA_002
@@ -89,11 +89,13 @@ AODC_BLKC
 AODC_ORGC
 AODC_SALA
 AODC_SALC
+AODC_DUST
 AODB_SULF
 AODB_BLKC
 AODB_ORGC
 AODB_SALA
 AODB_SALC
+AODB_DUST
 GMAO_TEMP
 GMAO_ABSH
 GMAO_PSFC
@@ -101,7 +103,19 @@ GMAO_UWND
 GMAO_VWND
 OH
 HO2
-REA_O1D
+REA_435
+REA_426
+REA_431
+REA_430
+REA_429
+REA_448
+REA_449
+REA_444
+REA_432
+REA_477
+REA_475
+REA_478
+REA_479
 -------------------------------------------------------------------------------
   Now give the times and locations of the flight
 -------------------------------------------------------------------------------
