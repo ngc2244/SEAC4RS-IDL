@@ -91,7 +91,8 @@
 ;    from one file.
 ;
 ;--------------------------------------------------------------
-function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
+function read_file_field_seac4rs, file, field, platform, nmol=nmol,ppt=ppt, $
+	 nss=nss
  
   ;------
   ; Define common names for fields with awkward names
@@ -129,6 +130,7 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
     'nit'    : field = 'ams_no3'
     'no3'    : field = 'ams_no3'
     'hno3_no3': field = 'hno3_no3_lt1um_saga'
+    'ch3cn'  : field = 'acetonitrile'
   else:
   endcase
 
@@ -197,6 +199,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = so4 / 96d-3 $
       else data = so4
 
   ; Special Case for SAGA bulk SOx
@@ -245,6 +249,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = so4 / 96d-3 $
       else data = so4
 
   ; Special Case for SAGA bulk ammonium
@@ -259,6 +265,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = nh4 / (18d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = nh4 / 18d-3 $
       else data = nh4
 
   ; Special Case for SAGA bulk nitrate
@@ -273,6 +281,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = no3 / (62d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = no3 / 62d-3 $
       else data = no3
 
   ; Special Case for AMS SOx
@@ -321,6 +331,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = ams_so4 / (96d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = ams_so4 / 96d-3 $
       else data = ams_so4
 
   ; Special Case for AMS Ammonium (units of microgram/m3) 
@@ -335,6 +347,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = ams_nh4 / (18d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = ams_nh4 / 18d-3 $
       else data = ams_nh4
 
   ; Special Case for AMS Nitrate (units of microgram/m3) 
@@ -349,7 +363,45 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; Convert units from ug/m3 to ppt if needed
       if ( keyword_set(ppt) ) then $
       data = ams_no3 / (62d-3 * ( 1.29 / 28.97 ) ) $
+      else if ( keyword_set(nmol) ) then $
+      data = ams_no3 / 62d-3 $
       else data = ams_no3
+
+  ; Special Case for HNO3
+  endif else If field eq 'hno3' then begin
+  
+      Print, 'Reading fields for HNO3 from file: '+file+' ...'
+      Print, '  Warning! This is an approximation based on SAGA HNO3+NO3 and AMS NO3!'
+  
+      s = 'ams_no3 = ' + Platform + '.nitrate_lt_1um_AMS' 
+      status = Execute( s )
+  
+      s = 'saga_hno3_no3 = ' + Platform + '.HNO3_NO3_lt1um_SAGA'
+      status = Execute( s )
+  
+      ; Convert AMS NO3 from ug/m3 to ppt
+      ams_no3 = ams_no3 / (62d-3 * ( 1.29 / 28.97 ) )
+      ; Subtract NO3 from HNO3
+      data = saga_hno3_no3 - ams_no3
+
+  ; Special Case for gas ratio
+  endif else If field eq 'gas_ratio' then begin
+  
+      Print, 'Reading fields for Gas Ratio from file: '+file+' ...'
+      Print, '  Warning! This is an approximation based on SAGA and AMS!'
+  
+      s = 'ams_so4 = ' + Platform + '.sulfate_lt_1um_AMS' 
+      status = Execute( s )
+      s = 'ams_nh4 = ' + Platform + '.ammonium_lt_1um_AMS' 
+      status = Execute( s )
+      s = 'saga_hno3_no3 = ' + Platform + '.HNO3_NO3_lt1um_SAGA'
+      status = Execute( s )
+  
+      ; Convert AMS from ug/m3 to ppt
+      ams_so4 = ams_so4 / (96d-3 * ( 1.29 / 28.97 ) )
+      ams_nh4 = ams_nh4 / (18d-3 * ( 1.29 / 28.97 ) )
+      ; Compute ratio
+      data = (ams_nh4 - 2*ams_so4)/saga_hno3_no3
 
   ; Special Case for AMS Ammonium/Sulphate ratio
   endif else If field eq 'nh4_so4_ratio' then begin
@@ -398,6 +450,8 @@ function read_file_field_seac4rs, file, field, platform, ppt=ppt, nss=nss
       ; SEAC4RS AMS data are already in ug/m3
       ;;; Convert from ug C/m3 to ug/m3
       ;;Data = oa * 2.1
+      if ( keyword_set(nmol) ) then $
+      data = oa / 200d-3 else $
       Data = oa
 
   endif else begin
@@ -429,7 +483,7 @@ end
 function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
                                 avgtime=avgtime, NoCities=NoCities,       $
                                 Troposphere=Troposphere, ppt=ppt, nss=nss,$
-                                minavg=minavg
+                                nmol=nmol, minavg=minavg
   
   ; Rename the internal variables to avoid changing the parameters
   ; that are passed in
@@ -534,7 +588,7 @@ function get_field_data_seac4rs, Field_in, Platforms_in, FlightDates_in, $
       For j = 0L, n_elements( NewFiles )-1L do begin
 
         NewData = read_file_field_seac4rs( NewFiles[j], Field, Platform[i], ppt=ppt,$
-		  nss=nss)
+		  nss=nss,nmol=nmol)
 
         ; Concatenate the data if it is nonzero
         If ( n_elements( NewData ) gt 1 ) then $  
