@@ -58,7 +58,7 @@
 pro seac4rs_obs_mod_profiles,species_in,platform,flightdates=flightdates,$
 	mindata=mindata,maxdata=maxdata,unit=unit,choose_win=choose_win, $
 	latrange=latrange,lonrange=lonrange,altrange=altrange,save=save, $
-	_extra=_extra
+	obs_only=obs_only,_extra=_extra
  
 ; Set defaults
 if n_elements(species_in) eq 0 then species_in='CO'
@@ -71,7 +71,8 @@ if N_Elements(flightdates) eq 0 then begin
 	flightdates = flightdates(uniq(flightdates))
 	flightdates = string(flightdates, '(i8.8)')
 endif
-if n_elements(altrange) eq 0 then altrange=[0,20]
+if n_elements(altrange) eq 0 then altrange=[0,12]
+if n_elements(obs_only) eq 0 then obs_only=0
  
 ; Initialize arrays
 species=[0]
@@ -120,6 +121,8 @@ for i = 0, n_elements(flightdates)-1 do begin
  
 nodata:
 endfor
+
+if  max(species_mod) eq 0 then obs_only=1
  
 ; Remove placeholder
 species  = species[1:*]
@@ -127,11 +130,13 @@ altp = altp[1:*]
 lat  = lat[1:*]
 lon  = lon[1:*]
 doy  = doy[1:*]
-species_mod = species_mod[1:*]
-doy_mod = doy_mod[1:*]
  
 ; Interpolate model to observed space
+if (not obs_only) then begin
+species_mod = species_mod[1:*]
+doy_mod = doy_mod[1:*]
 species_mod = interpol( species_mod, doy_mod, doy )
+endif
 
 ; Convert lon to -180 to 180
 lon[where(lon gt 180)] = lon[where(lon gt 180)]-360
@@ -161,10 +166,10 @@ endif
 
 ; Subset data
 species = species[index]
-species_mod = species_mod[index]
 altp = altp[index]
 lat = lat[index]
 lon = lon[index]
+if (not obs_only) then species_mod = species_mod[index]
  
 ; From CDH:
 ; Add this later? (jaf, 8/8/13)
@@ -182,15 +187,17 @@ alt_group     = ( ( floor(altp) < 12 ) > 0 )
 species_median   = tapply( species,  alt_group, 'median', /NaN )
 altp_median  = tapply( altp, alt_group, 'median', /NaN )
 
-; We can use the same group IDs for the model because they are
-; already interpolated to the same time and location 
-species_mod_median   = tapply( species_mod,  alt_group, 'median', /NaN )
- 
 ; Also get interquartile range
 species_25 = tapply( species, alt_group, 'percentiles', /Nan, value=0.25 )
 species_75 = tapply( species, alt_group, 'percentiles', /Nan, value=0.75 )
+ 
+if (not obs_only) then begin
+; We can use the same group IDs for the model because they are
+; already interpolated to the same time and location 
+species_mod_median   = tapply( species_mod,  alt_group, 'median', /NaN )
 species_mod_25 = tapply( species_mod, alt_group, 'percentiles', /Nan, value=0.25 )
 species_mod_75 = tapply( species_mod, alt_group, 'percentiles', /Nan, value=0.75 )
+endif
  
 ; Set plot strings
 title = 'Observed and modeled vertical profiles of '+species_in
@@ -210,13 +217,15 @@ endif else if n_elements(choose_win) eq 0 then window,0 else window,choose_win
 ; Plot individual data points
 plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,ceil(altrange[1])],ystyle=9,$
 	xtitle=xtitle,ytitle=ytitle,title=title,xstyle=9
-oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
+if (not Obs_Only) then begin
+   oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
 
 ; Plot IQR as error bars
-for i = 0, n_elements(species_mod_25)-1 do begin
-   oplot,[species_mod_25[i],species_mod_75[i]],$
-          [altp_median[i]+.05,altp_median[i]+.05],color=2,linestyle=0,thick=2
-endfor
+   for i = 0, n_elements(species_mod_25)-1 do begin
+      oplot,[species_mod_25[i],species_mod_75[i]],$
+             [altp_median[i]+.05,altp_median[i]+.05],color=2,linestyle=0,thick=2
+   endfor
+endif
 for i = 0, n_elements(species_25)-1 do begin
    oplot,[species_25[i],species_75[i]],$
           [altp_median[i],altp_median[i]],color=1,linestyle=0,thick=2
@@ -224,7 +233,7 @@ endfor
 
 ; Plot median values in each altitude bin
 oplot, species_median,altp_median,color=1,linestyle=0,thick=2
-oplot, species_mod_median,altp_median+.05,color=2,linestyle=0,thick=2
+if (not obs_only) then oplot, species_mod_median,altp_median+.05,color=2,linestyle=0,thick=2
  
 ; Legend
 legend, lcolor=[1,2],line=[0,0],lthick=[2,2],$
@@ -251,13 +260,15 @@ if n_elements(maxdata) eq 0 then maxdata=max([species,species_mod])
 plot, species,altp,color=1,psym=sym(1),symsize=0.2,yrange=[0,ceil(altrange[1])],ystyle=9,$
 	xrange=[mindata, maxdata], xstyle=9, xtitle=xtitle,$
 	ytitle=ytitle,title=title
-oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
 
-; Plot individual data points
-for i = 0, n_elements(species_mod_25)-1 do begin
-   oplot,[species_mod_25[i],species_mod_75[i]],$
-          [altp_median[i]+.05,altp_median[i]+.05],color=2,linestyle=0,thick=2
-endfor
+if (not obs_only) then begin
+   oplot, species_mod, altp,color=2,psym=sym(1),symsize=0.2
+
+   for i = 0, n_elements(species_mod_25)-1 do begin
+      oplot,[species_mod_25[i],species_mod_75[i]],$
+             [altp_median[i]+.05,altp_median[i]+.05],color=2,linestyle=0,thick=2
+   endfor
+endif
 for i = 0, n_elements(species_25)-1 do begin
    oplot,[species_25[i],species_75[i]],$
           [altp_median[i],altp_median[i]],color=1,linestyle=0,thick=2
@@ -265,7 +276,7 @@ endfor
 
 ; Plot median values in each altitude bin
 oplot, species_median,altp_median,color=1,linestyle=0,thick=2
-oplot, species_mod_median,altp_median+.05,color=2,linestyle=0,thick=2
+if (not obs_only) then oplot, species_mod_median,altp_median+.05,color=2,linestyle=0,thick=2
  
 ; Legend
 legend, lcolor=[1,2],line=[0,0],lthick=[2,2],$
