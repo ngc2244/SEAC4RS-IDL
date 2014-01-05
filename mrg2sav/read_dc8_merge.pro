@@ -248,31 +248,31 @@ pro read_dc8_merge, FileNames
                Name = 'Volume_Density_CIP_50_1550_um'
 
             ;; CDH Added conversions for the following names 7/27/2007
-            If ( Name EQ '2-BuONO2'                           ) Then $
+            If ( Name EQ '2-BuONO2_WAS'                           ) Then $
                Name = 'BuONO2'
             If ( Name EQ '1_2-Dichloroethane'                 ) Then $
                Name = 'Dichloro12ethane'
-            If ( Name EQ '3-PenONO2'                          ) Then $
+            If ( Name EQ '3-PenONO2_WAS'                          ) Then $
                Name = 'Pen3ONO2'
-            If ( Name EQ '2-PenONO2'                          ) Then $
+            If ( Name EQ '2-PenONO2_WAS'                          ) Then $
                Name = 'Pen2ONO2'
-            If ( Name EQ '3-Methyl-2-BuONO2'                  ) Then $
+            If ( Name EQ '3-Methyl-2-BuONO2_WAS'                  ) Then $
                Name = 'Methyl3-2-BuONO2'
-            If ( Name EQ '1-Butene'                           ) Then $
+            If ( Name EQ '1-Butene_WAS'                           ) Then $
                Name = 'But1ene'
-            If ( Name EQ '1_3-Butadiene'                      ) Then $
+            If ( Name EQ '1_3-Butadiene_WAS'                      ) Then $
                Name = 'Buta13diene'
-            If ( Name EQ '2-Methylpentane'                    ) Then $
+            If ( Name EQ '2-Methylpentane_WAS'                    ) Then $
                Name = 'Methyl2pentane'
-            If ( Name EQ '3-Methylpentane'                    ) Then $
+            If ( Name EQ '3-Methylpentane_WAS'                    ) Then $
                Name = 'Methyl3pentane'
-            If ( Name EQ '3-Ethyltoluene'                     ) Then $
+            If ( Name EQ '3-Ethyltoluene_WAS'                     ) Then $
                Name = 'Ethyl3toluene'
-            If ( Name EQ '4-Ethyltoluene'                     ) Then $
+            If ( Name EQ '4-Ethyltoluene_WAS'                     ) Then $
                Name = 'Ethyl4toluene'
-            If ( Name EQ '1_3_5-Trimethylbenzene'             ) Then $
+            If ( Name EQ '1_3_5-Trimethylbenzene_WAS'             ) Then $
                Name = 'Trimethyl135benzene'
-            If ( Name EQ '1_2_4-Trimethylbenzene'             ) Then $
+            If ( Name EQ '1_2_4-Trimethylbenzene_WAS'             ) Then $
                Name = 'Trimethyl124benzene'
             ;; End CDH Changes
             
@@ -293,6 +293,10 @@ pro read_dc8_merge, FileNames
                 Name = 'stdPT-to-AMB_Conversion_LARGE_2'
 		LARGE1 = 0
             EndIf
+            If ( Name EQ '1-Pentene_WAS'                           ) Then $
+               Name = 'Pentene'
+            If ( Name EQ '1_2-Propadiene_WAS'                           ) Then $
+               Name = 'Propadiene'
             ;; End JAF Changes
 
             Name = StrRepl(Name, '/', '_')
