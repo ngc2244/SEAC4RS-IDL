@@ -4,7 +4,7 @@ pro mrgsav2geosgrid, DirIn, DirOut, Platform, AvgTime, GridType, $
   ; Note: AvgTime is in minutes! InTime is in seconds!
   ; Merge files are generally one minute, so if no input time is
   ; specified use 60s
-  if (n_elements(InTime) eq 0) then InTime=10
+  if (n_elements(InTime) eq 0) then InTime=60
   ; Convert AvgTime and InTime to strings for use in filenames
   sInTime = StrTrim(String(InTime),1)
   sAvgTime = StrTrim(String(AvgTime),1)+'m'
@@ -19,6 +19,8 @@ pro mrgsav2geosgrid, DirIn, DirOut, Platform, AvgTime, GridType, $
   endelse
 
   nFiles = n_elements( FilesIn )
+
+  if FilesIn[0] eq '' then return
 
   For F=0, nFiles-1L do begin
 

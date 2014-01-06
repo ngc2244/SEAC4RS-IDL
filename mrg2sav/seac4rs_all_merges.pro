@@ -21,9 +21,8 @@ DirOut2 = !SEAC4RS+'/field_data/ER2/merge_10m_0.25x0.3125'
 mrgsav2geosgrid, DirIn2, DirOut2, $
   'ER2', 10, CTM_Type('GEOS5_47L',res=0.25)
 
-s1 = "rename.pl 's/(.*)mrg60(.*)/$1mrg60m$2/' "+DirOut1+"/*.sav"
-s2 = "rename.pl 's/(.*)mrg60(.*)/$1mrg60m$2/' "+DirOut2+"/*.sav"
-
 close,/all
+
+CD, startDir
 
 end
