@@ -104,7 +104,7 @@
 ;    from one file.
 ;
 ;--------------------------------------------------------------
-function read_file_model, file, field, ppt=ppt
+function read_file_model, file, field, ppt=ppt, nmol=nmol
 
   ;------
   ; Define common names for fields with awkward names
@@ -119,13 +119,15 @@ function read_file_model, file, field, ppt=ppt
   if ( field eq 'hcho_cams' ) then field = 'ch2o'
   if ( field eq 'hcho_lif'  ) then field = 'ch2o'
   if ( field eq 'no3'  ) then field = 'nit'
-  if ( field eq 'saga_so4' or field eq 'ams_so4' ) then field = 'so4' 
+  if ( field eq 'saga_so4' or field eq 'ams_so4' or field eq 'bulk_so4' ) then field = 'so4' 
   if ( field eq 'saga_sox' or field eq 'ams_sox' ) then field = 'sox' 
+  if ( field eq 'bulk_nh4' or field eq 'ams_nh4' ) then field = 'nh4' 
+  if ( field eq 'bulk_no3' or field eq 'ams_no3' ) then field = 'nit' 
+  if ( field eq 'bulk_nit' or field eq 'ams_nit' ) then field = 'nit' 
  
   Case field of
     'co'     :  conv_factor = 1e9    ; v/v -> ppbv
     'ch2o'   :  conv_factor = 1e12   ; v/v -> pptv
-    'hno3'   :  conv_factor = 1e9    ; v/v -> ppbv
     'hcooh'  :  conv_factor = 1e9    ; v/v -> ppbv
     'no'     :  conv_factor = 1e9    ; v/v -> ppbv
     'no2'    :  conv_factor = 1e9    ; v/v -> ppbv
@@ -168,12 +170,14 @@ function read_file_model, file, field, ppt=ppt
     ; first get nmol/m3 (independent of species)
     conv_factor = conv_factor * (1.29 / 28.97)
     ; next use appropriate molar mass for conversion to ug/m3
+    if ( ~keyword_set(nmol) ) then begin
     case field of
          'so4'  : conv_factor = conv_factor * 96d-3
          'so4s' : conv_factor = conv_factor * 96d-3
          'nh4'  : conv_factor = conv_factor * 18d-3
          'nit'  : conv_factor = conv_factor * 62d-3
     endcase
+    endif
  endif
 
   ; Open the Data file
@@ -208,7 +212,7 @@ function read_file_model, file, field, ppt=ppt
   
     Print, 'Reading model HNO3+NO3 from file: '+ file +' ...'
     
-    Data =  gc.hno3 + gc.no3
+    Data =  gc.hno3 + gc.nit
   
     ; Status is success, as long as data contains some elements
     status = n_elements( data ) gt 1
@@ -227,7 +231,17 @@ function read_file_model, file, field, ppt=ppt
     Print, 'Reading model NH4, SO4, NO3 from file: '+ file +' ...'
     
     ; neutralization (nh4/[2*so4+no3])
-    Data =  gc.nh4 / (2.*gc.so4 + gc.no3)
+    Data =  gc.nh4 / (2.*gc.so4 + gc.nit)
+  
+    ; Status is success, as long as data contains some elements
+    status = n_elements( data ) gt 1
+  
+  endif else If ( field eq 'gas_ratio' ) then begin
+   
+    Print, 'Reading model NH4, SO4, NO3, HNO3 from file: '+ file +' ...'
+    
+    ; gas ratio = (nh4 - 2*so4)/(no3+hno3)
+    Data =  (gc.nh4 - 2.*gc.so4) / (gc.hno3 + gc.nit)
   
     ; Status is success, as long as data contains some elements
     status = n_elements( data ) gt 1
@@ -262,6 +276,9 @@ function read_file_model, file, field, ppt=ppt
     Data =  ( gc.ocpi + gc.ocpo +             $   
               gc.asoa + gc.bbsoa + gc.bgsoa ) $ 
             * 1e6 * 12 * 2.1 / 0.0224
+
+    ; Use same assume molecular mass for OA to convert to nmol
+    if (keyword_set(nmol)) then Data = Data /200d-3
   
     ; Status is success, as long as data contains some elements
     status = n_elements( data ) gt 1
@@ -382,7 +399,7 @@ end
 function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
                                 NoCities=NoCities, Troposphere=Troposphere,$
                                 AltDir=AltDir, TCO=TCO, OFL=OFL, HG=HG,    $
-                                ppt=ppt,  avgtime=avgtime, hravg=hravg
+                                ppt=ppt, nmol=nmol, avgtime=avgtime, hravg=hravg
 
   ; Rename the internal variables to avoid changing the parameters
   ; that are passed in
@@ -504,7 +521,7 @@ function get_model_data_seac4rs, Field_in, Platforms_in, FlightDates_in,    $
       ; Read the data from each
       For j = 0L, n_elements( NewFiles )-1L do begin
 
-        Data = [ Data, read_file_model( NewFiles[j], Field, ppt=ppt )]
+        Data = [ Data, read_file_model( NewFiles[j], Field, ppt=ppt, nmol=nmol )]
 	
         ; Concatenate the data if it is nonzero
         If ( n_elements( NewData ) gt 1 ) then $

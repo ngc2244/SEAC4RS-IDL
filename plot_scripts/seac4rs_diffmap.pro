@@ -164,6 +164,10 @@ endelse
 
 ; If MinData and/or MaxData are not specified, use the min and max
 ; of the actual data 
+if n_elements(mindata) eq 0 and n_elements(maxdata) eq 0 then begin
+   maxdata=max(abs(diff),/nan)
+   mindata=-1d0*maxdata
+endif
 if N_elements(mindata) eq 0 then mindata=min(diff,/nan)
 if N_elements(maxdata) eq 0 then maxdata=max(diff,/nan)
 

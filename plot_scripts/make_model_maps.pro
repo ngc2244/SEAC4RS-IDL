@@ -105,6 +105,12 @@ CASE mspecies of
 	fscale = 1d3
 	Unit = 'pptv'
     end
+    'HNO3' : begin
+	MinData = 0
+	MaxData = 1d3
+	fscale = 1d3
+	Unit = 'pptv'
+    end
     'NO2' : begin
 	MinData = 0
 	MaxData = 1.0

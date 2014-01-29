@@ -20,6 +20,8 @@ pro read_all_merges, Platform, Dir=Dir
    ; Retrieve list of all files matching search criteria
    FileList = MFindFile(FileString)
 
+   if FileList[0] eq '' then return
+
    ;; Loop through files
    For F=0L, n_elements(FileList)-1L Do Begin
 
