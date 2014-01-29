@@ -106,8 +106,12 @@ function DC8_LineSplit, Line
    ; (bmy, 5/16/05)
    ;====================================================================
 
-   ; First try to break the line by commas ...
-   Result = StrBreak( Line, ',' )
+   ; First try to break the line by comma+space ...
+   Result = StrBreak( Line, ', ' )
+
+   ; ... then if that doesn't work, try commas ...
+   if ( N_Elements( Result ) eq 1 ) $
+      then Result = StrBreak( Line, ',' )
 
    ; ... then if that doesn't work, try spaces
    if ( N_Elements( Result ) eq 1 ) $
@@ -233,7 +237,7 @@ pro Get_DC8, FileNames,  $
          ;-------------------------------
          ; Parse line for airplane type
          ;-------------------------------
-         if ( StrPos( Line, 'Platform' ) ge 0 ) then begin
+         if ( StrPos( Line, 'PLATFORM' ) ge 0 ) then begin
             if ( StrPos( Line, 'DC-8' ) ge 0 ) then Plane = 'DC8'
             if ( StrPos( Line, 'ER-2' ) ge 0 ) then Plane = 'ER2' 
          endif
@@ -277,19 +281,20 @@ pro Get_DC8, FileNames,  $
 
             ; Split the line into sepa
             Result  = DC8_LineSplit( Line )
-                       
+            ;print, Result              
             ; Find the columns for TIME, LAT, LON, and STATIC PRESSURE
 	    ; Minor changes for SEAC4RS, lei, 08/05/2013
-            IndTime = Where( Result eq 'Start_UTC'       )
-            IndLat  = Where( Result eq 'Latitude'        )
-            IndLon  = Where( Result eq 'Longitude'       )
-            IndPrs  = Where( Result eq 'Static_Pressure' )
+	    ; Use 60s merge file, lei, 01/27/14
+            IndTime = Where( Result eq 'UTC'       )
+            IndLat  = Where( Result eq 'LATITUDE'  )
+            IndLon  = Where( Result eq 'LONGITUDE' )
+            IndPrs  = Where( Result eq 'PRESSURE'  )
 
             ; Error check
             if ( IndTime[0] lt 0 ) then Message, 'Time not found!'
             if ( IndLat[0]  lt 0 ) then Message, 'Latitude not found!'
             if ( IndLon[0]  lt 0 ) then Message, 'Longitude not found!'
-            if ( IndPrs[0]  lt 0 ) then Message, 'Static_Pressure not found!'
+            if ( IndPrs[0]  lt 0 ) then Message, 'Pressure not found!'
 
             ; Undefine 
             UnDefine, Result
@@ -321,8 +326,12 @@ pro Get_DC8, FileNames,  $
          Lat = Float( Result[IndLat] )
       
          ; Longitude
+	 ; In merge file, lon is given as planetocentric longitude,
+	 ; need to convert it into traditional longitude
+	 ; lei, 01/27/14
          Lon = Float( Result[IndLon] )
- 
+	 IF ( Lon >= 180 ) then Lon = Lon-360
+
          ; Static pressure
          Prs = Float( Result[IndPrs] ) 
  
