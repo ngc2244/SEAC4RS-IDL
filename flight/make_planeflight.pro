@@ -189,24 +189,19 @@ pro Make_PlaneFlight, Date, HdrFile=HdrFile, UpLoad=UpLoad, _EXTRA=e
    ;==================================================================== 
 
    ; NAV files w/ DC8 data
-   ; Now can read version A or B data, lei, 12/05/13
-
-   DC8_Pos =  [ './DC8/seac4rs-dc8hskping_dc8_' + YYYYMMDD_1 + '_ra.ict', $
-                './DC8/seac4rs-dc8hskping_dc8_' + YYYYMMDD   + '_ra.ict', $
-                './DC8/seac4rs-dc8hskping_dc8_' + YYYYMMDD_1 + '_rb.ict', $
-                './DC8/seac4rs-dc8hskping_dc8_' + YYYYMMDD   + '_rb.ict' ]
+   ; Use merge file, lei, 01/27/14
+   DC8_Pos =  [ './DC8/SEAC4RS-mrg60-dc8_merge_' + YYYYMMDD_1 + '_RJ.ict', $
+                './DC8/SEAC4RS-mrg60-dc8_merge_' + YYYYMMDD   + '_RJ.ict'  ]
  
    ; Logical flag is TRUE if DC8 data exists
-   Is_DC8  = ( File_Exist( DC8_Pos[0] ) OR File_Exist( DC8_Pos[1] ) OR    $
-               File_Exist( DC8_Pos[2] ) OR File_Exist( DC8_Pos[3] ) )
+   Is_DC8  = ( File_Exist( DC8_Pos[0] ) OR File_Exist( DC8_Pos[1] ) )
 
    ; Only proceed if DC8 data exists for this date
    if ( Is_DC8 ) then begin
 
       ; Echo info
       S = 'Getting flight track info from ' + DC8_Pos[0] + $
-          ' and ' + DC8_Pos[1] + ' and '    + DC8_Pos[2] + $
-          ' and ' + DC8_Pos[3]
+          ' and ' + DC8_Pos[1]
 
       Message, S, /Info
 
@@ -230,24 +225,19 @@ pro Make_PlaneFlight, Date, HdrFile=HdrFile, UpLoad=UpLoad, _EXTRA=e
    ;====================================================================
 
    ; NAV files w/ ER2 data
-   ; Now can read version A and B data, lei, 12/05/13
-
-   ER2_Pos =  [ './ER2/SEAC4RS-MMS-1HZ_ER2_' + YYYYMMDD_1 + '_RA.ict', $
-                './ER2/SEAC4RS-MMS-1HZ_ER2_' + YYYYMMDD   + '_RA.ict', $
-                './ER2/SEAC4RS-MMS-1HZ_ER2_' + YYYYMMDD_1 + '_RB.ict', $
-                './ER2/SEAC4RS-MMS-1HZ_ER2_' + YYYYMMDD   + '_RB.ict' ]
+   ; Use merge file, lei, 01/27/14
+   ER2_Pos =  [ './ER2/SEAC4RS-mrg60-ER2_merge_' + YYYYMMDD_1 + '_RH.ict', $
+                './ER2/SEAC4RS-mrg60-ER2_merge_' + YYYYMMDD   + '_RH.ict'  ]
 
    ; Logical flag is TRUE if ER2 data exists
-   Is_ER2  = ( File_Exist( ER2_Pos[0] ) OR File_Exist( ER2_Pos[1] ) OR $
-               File_Exist( ER2_Pos[2] ) OR File_Exist( ER2_Pos[3] ) )
+   Is_ER2  = ( File_Exist( ER2_Pos[0] ) OR File_Exist( ER2_Pos[1] ) )
 
    ; Only proceed if ER2 data exists for this date
    if ( Is_ER2 ) then begin
 
       ; Echo info
       S = 'Getting flight track info from ' + ER2_Pos[0] + $
-          ' and ' + ER2_Pos[1] + ' and '    + ER2_Pos[2] + $
-          ' and ' + ER2_Pos[3]
+          ' and ' + ER2_Pos[1]
 
       Message, S, /Info
 

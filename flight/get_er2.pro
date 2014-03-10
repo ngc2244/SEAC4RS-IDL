@@ -315,18 +315,19 @@ pro Get_ER2, FileNames,  $
             ; Split the line into sepa
             Result  = ER2_LineSplit( Line )
 
-            ; Find the columns for TIME, LAT, LON, and STATIC PRESSURE
+            ; Find the columns for TIME, LAT, LON, and PRESSURE
 	    ; Minor changes for SEAC4RS ER2 data, lei, 08/08/2013
-            IndTime = Where( Result eq 'TIME_UTC' )
-            IndLat  = Where( strtrim(Result) eq 'G_LAT'    )
-            IndLon  = Where( Result eq 'G_LONG'   )
-            IndPrs  = Where( Result eq 'P'        )
+	    ; Use merge file, lei, 01/27/14
+            IndTime = Where( Result eq 'UTC' )
+            IndLat  = Where( Result eq 'LATITUDE'    )
+            IndLon  = Where( Result eq 'LONGITUDE'   )
+            IndPrs  = Where( Result eq 'PRESSURE'        )
 
             ; Error check
-            if ( IndTime[0] lt 0 ) then Message, 'TIME_UTC not found!'
-            if ( IndLat[0]  lt 0 ) then Message, 'G_LAT not found!'
-            if ( IndLon[0]  lt 0 ) then Message, 'G_LONG not found!'
-            if ( IndPrs[0]  lt 0 ) then Message, 'P not found!'
+            if ( IndTime[0] lt 0 ) then Message, 'UTC not found!'
+            if ( IndLat[0]  lt 0 ) then Message, 'LATITUDE not found!'
+            if ( IndLon[0]  lt 0 ) then Message, 'LONGITUDE not found!'
+            if ( IndPrs[0]  lt 0 ) then Message, 'PRESSURE not found!'
 
             ; Undefine 
 ;            UnDefine, Result
@@ -375,9 +376,13 @@ pro Get_ER2, FileNames,  $
          ; Longitude
          ; Time 0.00001 according to the data, lei, 08/08/2013
          ; Use values read from header (jaf, 8/9/13)
+         ; In merge file, lon is given as planetocentric longitude,
+         ; need to convert it into traditional longitude, lei, 01/27/14
+         Lon = Float( Result[IndLon] )
 	 IF( Result[IndLon] ne MissingLon )             $
          THEN Lon = Float( Result[IndLon]*ScaleLon  )   $
          ELSE Lon = Float( Result[IndLon] )
+         IF ( Lon >= 180 ) THEN Lon = Lon-360
 
          ; Static pressure
          ; Use values read from header (jaf, 8/9/13)
