@@ -78,48 +78,20 @@ pro planelog2flightmerge, Platform, FileList, avgMin=avgMin, $
  
    If n_elements(Platform) NE 1 Then Stop, 'Must pass Platform'
 
-   ; Kludge for SEAC4RS
-   ; Runs go from 2100-2100, so there are two files for every date.
-   ; The first file is named plane.log.YYYYMMDD_21hours and has data
-   ; for 0001-2100, no data for 2101-2359. The second file is named
-   ; plane.log.YYYYMMDD and has junk for 0000-2100 followed by data
-   ; for 2101-2359. (jaf, 8/13/13)
-   FileList_in = FileList
-   FileList_new = strarr(n_elements(FileList_in)*2)
-   for FF=0,n_elements(FileList)-1 do begin
-       FileList_new[FF*2] = FileList_in[FF]+'_21hours'
-       FileList_new[FF*2+1] = FileList_in[FF]
-   endfor
-   FileList=FileList_new
-   nf = n_elements(FileList)
-
-   ; Also set first, last (for first day, last day) differently
-   FirstDay=fltarr(nf)
-   LastDay =fltarr(nf)
-   FirstDay[0:1]=1
-   LastDay[nf-2:nf-1]=1
- 
-; Initialize arrays
-   DATE            =  0L
-   TIME            =  0L
-   LAT             =  0.
-   LON             =  0.
-   PRESS           =  0.
-         
    ; ======================================================
    ; Read in plane.log files
    ; ======================================================
  
    ; Initialize
    First = 1L
-   ;Last  = 0L
+   Last  = 0L
  
    ; Loop through files
    FOR f=0L, n_elements(FileList)-1L DO BEGIN
    
        ; Check if this is the last file
-       ;IF ( F EQ n_elements( FileList )-1L ) THEN $
-       ;  LAST = 1L
+       IF ( F EQ n_elements( FileList )-1L ) THEN $
+         LAST = 1L
              
       ; Next file to read
       ThisFile = FileList[f]
@@ -158,9 +130,6 @@ pro planelog2flightmerge, Platform, FileList, avgMin=avgMin, $
          ; Find number of variables
          NVARS           =  PLANE[INDEX].NVARS
 
-         ; Initialize data array
-         If ( FIRST ) then DATA = fltarr(1,NVARS)
-         
          ; Find number of samples from model
          NPOINTS         =  PLANE[INDEX].NPOINTS
  
@@ -177,100 +146,51 @@ pro planelog2flightmerge, Platform, FileList, avgMin=avgMin, $
          ; ------------------------------------------------------
          ; Append new data to arrays
          ; ------------------------------------------------------
-         IF (FirstDay[f]) THEN BEGIN
+         IF (FIRST) THEN BEGIN
  
              ; Discard all points before takeoff time on first day
              ; could be due to a flight that started on previous day
-             ;; Kludge for SEAC4RS
-             ;; Now use this index to also remove junk data from files which
-             ;; only have real data after 2100 (jaf, 8/13/13)
-             ;;if Keyword_Set( takeoffTime ) then $
-             ;;  IND_thisFlight = where( TIME_1 ge takeoffTime ) $
-             ;;  else $
-             ;;  IND_thisFlight = indgen( n_elements(TIME_1) )
-             if (strpos(ThisFile,'_21hours') gt 0) then begin
-                if Keyword_Set( takeoffTime ) then $
-                  IND_thisFlight = where( TIME_1 ge takeoffTime ) $
-                  else $
-                  IND_thisFlight = indgen( n_elements(TIME_1) )
-             endif else begin
-                if Keyword_Set( takeoffTime ) then $
-                  IND_thisFlight = where( TIME_1 ge takeoffTime $
-				     and  TIME_1 ge 2101      ) $
-                  else $
-                  IND_thisFlight = where( TIME_1 ge 2101      )
-             endelse
-             ;;
+             if Keyword_Set( takeoffTime ) then $
+               IND_thisFlight = where( TIME_1 ge takeoffTime ) $
+               else $
+               IND_thisFlight = indgen( n_elements(TIME_1) )
              
-             if (IND_thisFlight[0] ge 0) then begin
-             ; Add Data to Array
-             DATE            =  [ DATE, DATE_1[  IND_thisFlight]   ]
-             TIME            =  [ TIME, TIME_1[  IND_thisFlight]   ]
-             LAT             =  [ LAT,  LAT_1[   IND_thisFlight]   ]
-             LON             =  [ LON,  LON_1[   IND_thisFlight]   ]
-             PRESS           =  [ PRESS, PRESS_1[ IND_thisFlight]   ]
-             DATA            =  [ DATA, DATA_1[  IND_thisFlight,*] ]
-             endif
+             ; Start Array
+             DATE            =  [ DATE_1[  IND_thisFlight]   ]
+             TIME            =  [ TIME_1[  IND_thisFlight]   ]
+             LAT             =  [ LAT_1[   IND_thisFlight]   ]
+             LON             =  [ LON_1[   IND_thisFlight]   ]
+             PRESS           =  [ PRESS_1[ IND_thisFlight]   ]
+             DATA            =  [ DATA_1[  IND_thisFlight,*] ]
          
-         ENDIF ELSE IF (LastDay[f]) THEN BEGIN
+         ENDIF ELSE IF (LAST) THEN BEGIN
  
              ; Discard all points after landing time on last day
              ; could be due to a flight starting later the same day
-             ;; Kludge for SEAC4RS
-             ;; Now use this index to also remove junk data from files which
-             ;; only have real data after 2100 (jaf, 8/13/13)
-             ;;IF Keyword_Set( landingTime ) THEN $
-             ;;  IND_thisFlight = where( TIME_1 LE landingTime ) $
-             ;;  ELSE $
-             ;;  IND_thisFlight = indgen( n_elements( TIME_1 ) )
-             if (strpos(ThisFile,'_21hours') gt 0) then begin
-                IF Keyword_Set( landingTime ) THEN $
-                  IND_thisFlight = where( TIME_1 LE landingTime ) $
-                  ELSE $
-                  IND_thisFlight = indgen( n_elements( TIME_1 ) )
-             endif else begin
-                if Keyword_Set( landingTime ) then $
-                  IND_thisFlight = where( TIME_1 le landingTime $
-				     and  TIME_1 ge 2101      ) $
-                  else $
-                  IND_thisFlight = where( TIME_1 ge 2101      )
-             endelse
-             ;;
+             IF Keyword_Set( landingTime ) THEN $
+               IND_thisFlight = where( TIME_1 LE landingTime ) $
+               ELSE $
+               IND_thisFlight = indgen( n_elements( TIME_1 ) )
 
              ; Add data to array
-             if (IND_thisFlight[0] ge 0) then begin
              DATE            =  [ DATE,  DATE_1[  IND_thisFlight]   ]
              TIME            =  [ TIME,  TIME_1[  IND_thisFlight]   ]
              LAT             =  [ LAT,   LAT_1[   IND_thisFlight]   ]
              LON             =  [ LON,   LON_1[   IND_thisFlight]   ]
              PRESS           =  [ PRESS, PRESS_1[ IND_thisFlight]   ]
              DATA            =  [ DATA,  DATA_1[  IND_thisFlight,*] ]
-             endif
  
          ENDIF ELSE BEGIN
  
              ; If this isn't either the first or last day/file, then 
              ; keep all data
-             
-             ;; Kludge for SEAC4RS
-             ;; Now use this index to also remove junk data from files which
-             ;; only have real data after 2100 (jaf, 8/13/13)
-             if (strpos(ThisFile,'_21hours') gt 0) then begin
-               IND_thisFlight = indgen( n_elements( TIME_1 ) )
-             endif else begin
-               IND_thisFlight = where( TIME_1 ge 2101 )
-             endelse
-             ;;
 
-             ; Add data to array
-             if (IND_thisFlight[0] ge 0) then begin
-             DATE            =  [ DATE,  DATE_1[  IND_thisFlight]   ]
-             TIME            =  [ TIME,  TIME_1[  IND_thisFlight]   ]
-             LAT             =  [ LAT,   LAT_1[   IND_thisFlight]   ]
-             LON             =  [ LON,   LON_1[   IND_thisFlight]   ]
-             PRESS           =  [ PRESS, PRESS_1[ IND_thisFlight]   ]
-             DATA            =  [ DATA,  DATA_1[  IND_thisFlight,*] ]
-             endif
+             DATE            =  [DATE,      DATE_1    ]
+             TIME            =  [TIME,      TIME_1    ]
+             LAT             =  [LAT,       LAT_1     ]
+             LON             =  [LON,       LON_1     ]
+             PRESS           =  [PRESS,     PRESS_1   ]
+             DATA            =  [DATA,      DATA_1    ]
          
          ENDELSE
  
@@ -280,6 +200,7 @@ pro planelog2flightmerge, Platform, FileList, avgMin=avgMin, $
       ENDELSE
    ENDFOR
    
+
    ; Check if File Searches found any data
    If (First) then begin
  
@@ -287,14 +208,6 @@ pro planelog2flightmerge, Platform, FileList, avgMin=avgMin, $
  
    Endif else begin
 
-      ; Remove zeros
-      DATE            =  DATE[1:*]
-      TIME            =  TIME[1:*] 
-      LAT             =  LAT[1:*]
-      LON             =  LON[1:*]
-      PRESS           =  PRESS[1:*]
-      DATA            =  DATA[1:*,*]
-    
       ; ======================================================
       ; Misc. Data Processing
       ; ======================================================
