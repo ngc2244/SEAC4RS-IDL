@@ -129,6 +129,10 @@ PRO avg_geosgrid, GridType=GridType,     $
    
    if (not OK) then message, 'Unacceptable inputs'
      
+   ; Check longitudes - code set up for [-180,180], not 0-360
+   ind = where( lon gt 180, count)
+   if ( count gt 0 ) then lon[ind] = lon[ind]-360.
+
    ;==============================================================
    ; Set up GEOS-Chem grid, which defines areas to average
    ;==============================================================
