@@ -2,7 +2,7 @@
 
 This directory contains:
  
-(1) IDL scripts to generate inputs of GEOS-Chem palneflight diagonstics
+(1) IDL scripts to generate inputs of GEOS-Chem planeflight diagonstics
     
   get_dc8.pro		: IDL script to get DC-8 location and time, 
 			: called by make_planeflight.pro, if necessary
@@ -30,3 +30,18 @@ To run the scripts:
 make_planeflight, 20130531
 or 
 make_planeflight, 20130531, /upload     
+
+NOTE:
+make_planeflight creates input files for 1 day in UTC time only.
+If a flight spanned two days in UTC time, make_planeflight should be 
+called one for each of these days. For example, if a flight took off
+at 1500 UTC on 20130531 and landed and 0100 UTC on 20130601, call
+make_planeflight, 20130531
+make_planeflight, 20130601
+
+If make_planeflight is called for a day for which there is no flight
+data, a blank input file will be created, and this will not have a
+detrimental effect on GEOS-Chem at runtime. It is therefore safe to
+just loop over all dates from start to end of campaign when creating
+these files.
+(J. Fisher, updated 12 Aug 2014)
