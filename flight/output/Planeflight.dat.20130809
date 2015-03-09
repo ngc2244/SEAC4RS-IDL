@@ -1,8 +1,8 @@
-Planeflight.dat -- Input file for ND40 diagnostic (GEOS-5/NRT-SEAC4RS runs)
+Planeflight.dat -- Input file for ND40 diagnostic (GEOS-FP/NRT-SEAC4RS runs)
 Lei Zhu
-03 Dec 2013
+14 Oct 2014
 -------------------------------------------------------------------------------
- 112       <-- # of variables to be output (list them below, one per line)
+ 192       <-- # of variables to be output (list them below, one per line)
 -------------------------------------------------------------------------------
 TRA_001
 TRA_002
@@ -84,6 +84,12 @@ TRA_077
 TRA_078
 TRA_079
 TRA_080
+TRA_081
+TRA_082
+TRA_083
+TRA_084
+TRA_085
+TRA_086
 AODC_SULF
 AODC_BLKC
 AODC_ORGC
@@ -101,31 +107,103 @@ GMAO_ABSH
 GMAO_PSFC
 GMAO_UWND
 GMAO_VWND
+GMAO_PBLH
 OH
 HO2
-REA_435
-REA_426
-REA_431
-REA_430
-REA_429
-REA_448
-REA_449
-REA_444
-REA_432
-REA_477
+AN
+NOy
+MASK
+PO3
+LNOx
+RIO2
+RO2
+WOLF_ISOP
+WOLF_MONO
+WOLF_SOIL
+WOLF_FERT
+WOLF_VO3
+WOLF_FO3
+WOLF_VNO2
+WOLF_FNO2
+WOLF_VH2O2
+WOLF_FH2O2
+REA_O1D
+REA_N2O5
+REA_039
+REA_063
+REA_086
+REA_087
+REA_095
+REA_107
+REA_108
+REA_115
+REA_141
+REA_143
+REA_176
+REA_177
+REA_287
+REA_299
+REA_330
+REA_350
+REA_351
+REA_352
+REA_357
+REA_362
+REA_369
+REA_370
+REA_371
+REA_372
+REA_373
+REA_374
+REA_375
+REA_376
+REA_406
+REA_407
+REA_408
+REA_409
+REA_410
+REA_411
+REA_412
+REA_413
+REA_414
+REA_434
+REA_464
+REA_465
+REA_466
+REA_469
+REA_470
+REA_471
+REA_473
+REA_474
 REA_475
+REA_476
 REA_478
-REA_479
+REA_502
+REA_503
+REA_612
+REA_613
+REA_614
+REA_617
+REA_618
+REA_619
+REA_622
+REA_623
+REA_658
+REA_660
+REA_661
+REA_662
+REA_673
+REA_674
+REA_676
+REA_678
 -------------------------------------------------------------------------------
   Now give the times and locations of the flight
 -------------------------------------------------------------------------------
 Point  Type DD-MM-YYYY HH:MM     LAT     LON   PRESS
-    0 DC8   09-08-2013 00:00   29.66  -94.91  853.16
-    1 DC8   09-08-2013 00:01   29.71  -94.97  876.80
-    2 DC8   09-08-2013 00:02   29.72  -95.02  908.30
-    3 DC8   09-08-2013 00:03   29.69  -95.06  944.08
-    4 DC8   09-08-2013 00:04   29.66  -95.09  968.49
-    5 DC8   09-08-2013 00:05   29.63  -95.13  994.77
-    6 DC8   09-08-2013 00:06   29.61  -95.15 1010.82
-    7 DC8   09-08-2013 00:07   29.60  -95.16 1010.14
+    0 DC8   09-08-2013 00:00   29.69  -94.94  867.41
+    1 DC8   09-08-2013 00:01   29.72  -94.99  889.77
+    2 DC8   09-08-2013 00:02   29.71  -95.05  927.29
+    3 DC8   09-08-2013 00:03   29.68  -95.08  956.24
+    4 DC8   09-08-2013 00:04   29.65  -95.11  981.94
+    5 DC8   09-08-2013 00:05   29.62  -95.14 1005.94
 99999   END 00-00-0000 00:00    0.00    0.00    0.00
